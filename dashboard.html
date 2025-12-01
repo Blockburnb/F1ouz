@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard F1</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav>
+        <h1>Espace Pilote</h1>
+        <div id="user-info"></div>
+        <button onclick="logout()">Se déconnecter</button>
+    </nav>
+
+    <div class="dashboard-container">
+        
+        <section class="common-charts">
+            <div class="card">
+                <h2>Top Victoires (Bar Chart)</h2>
+                <div id="chart-bar" class="chart-placeholder">
+                    [Graphique à barres en attente...]
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Statistiques Écuries (Pie Chart)</h2>
+                <div id="chart-pie" class="chart-placeholder">
+                    [Graphique secteur en attente...]
+                </div>
+            </div>
+        </section>
+
+        <section id="admin-zone" class="admin-charts" style="display: none;"> 
+            <div class="card complex-card">
+                <h2>Analyse Avancée (Graphique Complexe)</h2>
+                <p class="warning-text">Réservé aux administrateurs</p>
+                <div id="chart-complex" class="chart-placeholder">
+                    [Graphique Complexe en attente...]
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // On lance la vérification des droits dès le chargement
+        checkDashboardAccess(); 
+    </script>
+</body>
+</html>

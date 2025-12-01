@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Analytics - Accueil</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+    <!-- Barre de Navigation Dynamique -->
+    <nav class="navbar">
+        <div class="logo">🏁 F1 Analytics</div>
+        
+        <!-- C'est ici que le JS va injecter le bon bouton -->
+        <div id="nav-auth" class="nav-links">
+            <!-- Par défaut (si JS désactivé), on propose la connexion -->
+            <a href="login.html" class="btn-login">Connexion Membre</a>
+        </div>
+    </nav>
+
+    <!-- Section Présentation -->
+    <header class="hero-section">
+        <div class="hero-content">
+            <h1 id="welcome-title">L'Histoire de la Formule 1</h1>
+            <p>
+                Explorez plus de 70 ans de compétition. Consultez les statistiques publiques ci-dessous 
+                ou connectez-vous pour accéder à votre espace personnalisé.
+            </p>
+            <div class="stats-badges">
+                <span class="badge">800+ Pilotes</span>
+                <span class="badge">1000+ Courses</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tableau Filtrable (Visible par tous) -->
+    <main class="container">
+        <section class="data-table-section">
+            <div class="section-header">
+                <h2>Annuaire Officiel des Pilotes</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Rechercher un pilote..." onkeyup="filterTable()">
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table id="driversTable">
+                    <thead>
+                        <tr>
+                            <th>Réf</th>
+                            <th>Prénom</th>
+                            <th>Nom</th>
+                            <th>Nationalité</th>
+                            <th>Date de Naissance</th>
+                            <th>Info</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+                <p id="loading-msg">Chargement des données...</p>
+                <p id="no-result-msg" style="display:none;">Aucun résultat trouvé.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Projet Web IUT Lyon 2</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

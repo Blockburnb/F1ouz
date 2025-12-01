@@ -1,94 +1,194 @@
-/* style.css */
+/* --- Global & Reset (CRUCIAL pour éviter le "de travers") --- */
+* {
+    box-sizing: border-box; /* Inclut padding et bordures dans la largeur */
+}
+
 body {
-    margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f3f3f3; /* Gris clair fond de page */
+    margin: 0;
+    padding: 0;
+    background-color: #f3f3f3;
+    color: #333;
+    /* On retire le display:flex global qui casserait la page d'accueil */
+}
+
+/* --- Navbar --- */
+.navbar {
+    background-color: #15151e;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.logo { font-weight: bold; font-size: 1.5rem; }
+
+/* Boutons Navigation */
+.btn-login {
+    background-color: #e10600;
+    color: white;
+    padding: 8px 20px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.btn-login:hover { background-color: #b30500; }
+
+.btn-logout {
+    background-color: transparent;
+    border: 1px solid #666;
+    color: #ccc;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+.btn-logout:hover {
+    border-color: white;
+    color: white;
+}
+
+.user-greeting {
+    margin-right: 15px;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+/* --- LOGIN PAGE (Centrage Parfait) --- */
+.login-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh; /* Prend toute la hauteur de l'écran */
-}
-
-.login-wrapper {
+    min-height: 100vh; /* Prend toute la hauteur de l'écran */
     width: 100%;
-    max-width: 400px;
-    padding: 20px;
+    padding: 20px; /* Marge de sécurité pour mobile */
 }
 
 .login-card {
-    background-color: white;
+    background: white;
     padding: 40px;
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
     text-align: center;
-    border-top: 5px solid #e10600; /* Rouge F1 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-top: 5px solid #e10600;
 }
 
-h1 {
-    margin: 0;
-    color: #15151e;
+.input-group { margin-bottom: 15px; text-align: left; }
+.input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+.input-group input { 
+    width: 100%; 
+    padding: 10px; 
+    border: 1px solid #ccc; 
+    border-radius: 5px; 
 }
 
-.subtitle {
-    color: #666;
-    margin-bottom: 30px;
-    font-size: 0.9em;
+.divider {
+    margin: 20px 0;
+    color: #999;
+    position: relative;
+    font-size: 0.8rem;
 }
-
-.input-group {
-    margin-bottom: 20px;
-    text-align: left;
+.divider::before, .divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: #ddd;
 }
+.divider::before { left: 0; }
+.divider::after { right: 0; }
 
-.input-group label {
+.btn-guest {
     display: block;
-    margin-bottom: 5px;
-    color: #333;
-    font-weight: bold;
-    font-size: 0.9rem;
-}
-
-.input-group input {
     width: 100%;
-    padding: 10px; /* Espace intérieur */
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box; /* Pour que le padding ne casse pas la largeur */
-    font-size: 1rem;
-}
-
-.btn-login {
-    width: 100%;
-    padding: 12px;
-    background-color: #e10600; /* Rouge F1 */
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 1rem;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s;
-}
-
-.btn-login:hover {
-    background-color: #b30500; /* Rouge plus foncé au survol */
-}
-
-.error {
-    color: red;
-    font-size: 0.9rem;
-    margin-top: 15px;
-    min-height: 20px; /* Évite que ça bouge quand le texte apparait */
-}
-
-.footer-text {
-    margin-top: 20px;
-    font-size: 0.85rem;
-    color: #666;
-}
-
-.footer-text a {
-    color: #e10600;
+    padding: 10px;
+    background-color: white;
+    color: #555;
+    border: 2px solid #ddd;
     text-decoration: none;
+    border-radius: 5px;
     font-weight: bold;
+    text-align: center;
+    transition: all 0.3s;
 }
+.btn-guest:hover {
+    border-color: #999;
+    color: #333;
+}
+
+.error { color: red; min-height: 20px; font-size: 0.9rem; margin-top: 10px; }
+.footer-text { margin-top: 20px; font-size: 0.85rem; color: #666; }
+
+/* --- ACCUEIL & TABLEAU --- */
+.hero-section {
+    background: #15151e;
+    color: white;
+    text-align: center;
+    padding: 60px 20px;
+    border-bottom: 4px solid #e10600;
+}
+.hero-content h1 { margin: 0 0 15px 0; }
+.stats-badges .badge {
+    background: rgba(255,255,255,0.1);
+    padding: 5px 12px; border-radius: 15px; margin: 0 5px; border: 1px solid #555;
+    display: inline-block; /* Pour ne pas casser l'alignement */
+}
+
+.container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+
+.data-table-section { 
+    background: white; 
+    padding: 20px; 
+    border-radius: 8px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+}
+
+.section-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 20px;
+    flex-wrap: wrap; 
+    gap: 10px;
+}
+
+.search-box { position: relative; }
+.search-box input { 
+    padding: 8px 35px 8px 15px; 
+    border-radius: 20px; 
+    border: 1px solid #ccc; 
+    width: 250px; 
+}
+.search-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+
+/* Scroll du Tableau géré en CSS (Plus propre) */
+.table-container {
+    max-height: 450px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+/* En-tête Fixe (Sticky) */
+thead th {
+    position: sticky;
+    top: 0;
+    background-color: #15151e; /* Noir F1 */
+    color: white;
+    padding: 12px;
+    text-align: left;
+    z-index: 10; /* Reste au dessus */
+    border-bottom: 3px solid #e10600;
+}
+
+td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+tr:hover { background-color: #fff5f5; }
+.wiki-link { color: #e10600; text-decoration: none; }

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - F1 Analytics</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <h1>Créer un compte</h1>
+            <p class="subtitle">Rejoignez la communauté F1 Analytics</p>
+
+            <form id="registerForm">
+                <div class="input-group">
+                    <label for="reg-username">Choisir un identifiant</label>
+                    <input type="text" id="reg-username" name="username" placeholder="Pseudo" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="reg-password">Choisir un mot de passe</label>
+                    <input type="password" id="reg-password" name="password" placeholder="Mot de passe" required>
+                </div>
+
+                <button type="submit" class="btn-login">S'inscrire</button>
+            </form>
+
+            <p id="error-message" class="error"></p>
+            <p id="success-message" style="color: green; margin-top: 10px;"></p>
+            
+            <p class="footer-text">
+                Déjà un compte ? <a href="login.html">Se connecter</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

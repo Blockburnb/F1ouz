@@ -1,33 +1,40 @@
 <?php
 // api/get_data.php
+header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 
-// Quel fichier veut-on ? (ex: drivers)
+// Récupérer le nom du fichier demandé (ex: drivers)
 $filename = $_GET['file'] ?? '';
 
-// Sécurité basique pour éviter de lire n'importe quoi sur le disque
-$allowed_files = ['drivers', 'results', 'circuits', 'constructors', 'races', 'qualifying']; // Ajoutez vos autres fichiers ici
+// Liste blanche des fichiers autorisés (Sécurité)
+$allowed_files = ['drivers', 'races', 'circuits', 'constructors', 'results'];
 
 if (!in_array($filename, $allowed_files)) {
-    echo json_encode(['error' => 'Fichier non autorisé ou inexistant']);
+    echo json_encode(['error' => 'Fichier non autorisé']);
     exit;
 }
 
+// Chemin vers le dossier data (remonte d'un cran avec ../)
 $filePath = "../data/{$filename}.csv";
 
 if (!file_exists($filePath)) {
-    echo json_encode(['error' => 'Fichier introuvable']);
+    echo json_encode(['error' => "Fichier introuvable: $filePath"]);
     exit;
 }
 
 $data = [];
 if (($handle = fopen($filePath, "r")) !== FALSE) {
-    // Lire la première ligne pour les clés (en-têtes)
+    // Récupérer les entêtes (première ligne)
     $headers = fgetcsv($handle, 1000, ",");
     
+    // Nettoyer les entêtes (parfois il y a des caractères invisibles au début du fichier UTF-8 BOM)
+    if(isset($headers[0])) {
+        $headers[0] = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $headers[0]);
+    }
+
     while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
-        // Associer chaque valeur à son en-tête
-        if (count($headers) === count($row)) { // Vérif de sécurité
+        if (count($headers) === count($row)) {
+            // Créer un tableau associatif : ['forename' => 'Lewis', 'surname' => 'Hamilton', ...]
             $data[] = array_combine($headers, $row);
         }
     }
