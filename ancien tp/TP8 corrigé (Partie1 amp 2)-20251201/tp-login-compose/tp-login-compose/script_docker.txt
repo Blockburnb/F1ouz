@@ -1,0 +1,14 @@
+
+docker exec -it compte_db
+
+mysql -u appuser -p
+
+type: password
+
+
+SHOW TABLES;
+
+USE tp_login;
+SELECT * FROM users;
+
+

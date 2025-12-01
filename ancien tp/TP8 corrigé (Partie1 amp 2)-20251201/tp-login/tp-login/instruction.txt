@@ -1,0 +1,30 @@
+start docker desktop to have the deamon (skip login if you want)
+
+
+docker build -t tp-login .
+
+
+docker run -p 3000:3000 tp-login
+
+
+
+we see Server running at http://0.0.0.0:3000/
+
+
+run http://localhost:3000/
+
+
+--If we want to push
+
+docker login
+
+
+docker images
+
+
+docker tag tp-login username/tp-login:latest
+
+
+docker push bniang/tp-login:latest
+
+

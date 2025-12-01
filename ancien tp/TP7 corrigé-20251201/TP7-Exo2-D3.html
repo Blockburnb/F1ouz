@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Exercice 2 - Diagramme en secteurs</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <link rel="stylesheet" href="TP7-D3.css">
+    <style>
+        body {
+            background-color: #f0f0f0;
+        }
+        
+        text.inside {
+            font-size: 20px;
+            font-weight: bold;
+            fill: white;
+        }
+        
+        text.label {
+            font-size: 16px;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Étape 1 : Création du tableau de données
+        var data = [
+            {Type_de_mission: "Statistiques études", Nombre_etudiants: 8},
+            {Type_de_mission: "Informatique", Nombre_etudiants: 1},
+            {Type_de_mission: "BI/ Décisionnel", Nombre_etudiants: 15},
+            {Type_de_mission: "Autres", Nombre_etudiants: 2}
+        ];
+        
+        // Création du SVG
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("height", "600")
+            .attr("width", "900");
+        
+        // Étape 2 : Création du tableau des segments
+        var base_diagramme = d3.pie()
+            .value(function(d) {
+                return d.Nombre_etudiants;
+            })(data);
+        
+        var segments = d3.arc()
+            .innerRadius(0)
+            .outerRadius(200)
+            .padAngle(.05)
+            .padRadius(50);
+        
+        // Étape 3 : Segmentation par couleur
+        var couleur = d3.scaleOrdinal(d3.schemeDark2);
+        
+        var sections = svg.append("g")
+            .attr("transform", "translate(250, 250)")
+            .selectAll("path")
+            .data(base_diagramme);
+        
+        sections.enter()
+            .append("path")
+            .attr("d", segments)
+            .attr("fill", function(d) {
+                return couleur(d.data.Nombre_etudiants);
+            });
+        
+        // Étape 4 : Libellé des segments
+        var libelle = d3.select("g")
+            .selectAll("text")
+            .data(base_diagramme);
+        
+        libelle.enter()
+            .append("text")
+            .classed("inside", true)
+            .each(function(d) {
+                var center = segments.centroid(d);
+                d3.select(this)
+                    .attr("x", center[0])
+                    .attr("y", center[1])
+                    .text(d.data.Nombre_etudiants);
+            });
+        
+        // Étape 5 : Création de la légende
+        
+        // Définir la position de la légende
+        var legends = svg.append("g")
+            .attr("transform", "translate(500, 100)")
+            .selectAll(".legends")
+            .data(base_diagramme);
+        
+        var legend = legends.enter()
+            .append("g")
+            .classed("label", true)
+            .attr("transform", function(d, i) {
+                return "translate(0," + (i + 1) * 50 + ")";
+            });
+        
+        // Créer des symboles de la légende
+        legend.append("rect")
+            .attr("width", 20)
+            .attr("height", 20)
+            .attr("fill", function(d) {
+                return couleur(d.data.Nombre_etudiants);
+            });
+        
+        // Afficher le texte qui correspond à chaque rectangle
+        legend.append("text")
+            .classed("label", true)
+            .text(function(d) {
+                return d.data.Type_de_mission;
+            })
+            .attr("fill", function(d) {
+                return couleur(d.data.Nombre_etudiants);
+            })
+            .attr("x", 30)
+            .attr("y", 15);
+        
+        // Ajout d'un titre
+        svg.append("text")
+            .attr("x", 150)
+            .attr("y", 40)
+            .attr("fill", "#2c3e50")
+            .style("font-size", "24px")
+            .style("font-weight", "bold")
+            .style("text-decoration", "underline")
+            .text("Répartition des types de missions BUT SD 2024-25");
+    </script>
+</body>
+</html>

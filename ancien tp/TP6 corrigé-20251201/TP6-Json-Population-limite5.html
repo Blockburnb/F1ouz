@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>TP5 Population</title>
+
+<!-- D3.js -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<style type="text/css">
+body{
+  font-family:Verdana, Geneva, sans-serif;
+  background-color:#b2bdc6;
+} 
+
+table {
+  border:3px solid #6495ed;
+  border-collapse:collapse;
+  width:50%;
+  margin:auto;
+}
+
+tbody {
+  background-color:#FFFFFF;
+  border:1px solid #6495ed;
+}
+
+th {
+  padding:5px;
+  background-color:#EFF6FF;
+  width:25%;
+}
+
+td{
+  font-family:sans-serif;
+  font-size:80%;
+  border:1px solid #6495ed;
+  padding:5px;
+  text-align:center;
+}
+
+</style>
+
+<script>
+var vRequete; // objet XMLHttpRequest global
+
+function rest(){
+    var departement = document.getElementById('departement').value;
+    var adresse = 'https://geo.api.gouv.fr/departements/' + departement + '/communes';
+    vRequete = new XMLHttpRequest();
+    vRequete.onreadystatechange = gestion_requete;
+    vRequete.open('GET', adresse);
+    vRequete.send();
+}
+
+function gestion_requete() {
+    if (vRequete.readyState === XMLHttpRequest.DONE) {
+        if (vRequete.status === 200) {
+            var donne = vRequete.responseText;
+            var donnees = JSON.parse(donne);
+
+            // tri décroissant par population
+            donnees.sort(function(a,b){ return b.population - a.population; });
+
+            document.getElementById("rendu").innerHTML = '';
+            var popu_globale = 0;
+
+            var vPop = []; // tableau pour D3
+            var vCom = []; // tableau des noms (pour l'étape suivante)
+
+            for (var i = 0; i < donnees.length; i++) {
+                if (donnees[i].population > 3000) {
+                    var nouvelleLigne = document.getElementById("rendu").insertRow(-1);
+
+                    var nouvelleCellule = nouvelleLigne.insertCell(-1);
+                    nouvelleCellule.textContent = donnees[i].nom;
+
+                    nouvelleCellule = nouvelleLigne.insertCell(-1);
+                    nouvelleCellule.textContent = i+1;
+
+                    nouvelleCellule = nouvelleLigne.insertCell(-1);
+                    nouvelleCellule.textContent = donnees[i].codesPostaux;
+
+                    nouvelleCellule = nouvelleLigne.insertCell(-1);
+                    nouvelleCellule.textContent = donnees[i].population;
+
+                    popu_globale += donnees[i].population;
+
+                    // ajout pour D3
+                    vPop.push(donnees[i].population);
+                    vCom.push(donnees[i].nom);
+                }
+            }
+
+            document.getElementById("popu_globale").value = popu_globale;
+
+            // Étape 2 : Limitation aux 5 communes les plus peuplées
+            // On prend les 5 premières valeurs des tableaux vPop et vCom (triés par population décroissante)
+            var vPopTop5 = vPop.slice(0, 5);
+            var vComTop5 = vCom.slice(0, 5);        
+
+            // appel du graphique
+            graph_population(vPopTop5, vComTop5);
+        } else {
+            alert('Problème de requête.');
+        }
+    }
+}
+
+// Fonction pour créer le graphique à barres (5 communes, noms sur axe X)
+function graph_population(vPop, vCom) {
+    d3.select("#graphique").selectAll("*").remove();
+
+    var width = 500;
+    var height = 300;
+    var margin = {top: 20, right: 20, bottom: 50, left: 40};
+
+    var svg = d3.select("#graphique")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+    var y = d3.scaleLinear()
+              .domain([0, d3.max(vPop)])
+              .range([height - margin.bottom, margin.top]);
+
+    var x = d3.scaleBand()
+              .domain(vCom) // noms des communes
+              .range([margin.left, width - margin.right])
+              .padding(0.2);
+
+    // Barres
+    svg.selectAll("rect")
+       .data(vPop)
+       .enter()
+       .append("rect")
+       .attr("x", (d,i) => x(vCom[i]))
+       .attr("y", d => y(d))
+       .attr("height", d => height - margin.bottom - y(d))
+       .attr("width", x.bandwidth())
+       .attr("fill", "#6495ed");
+
+    // Texte population au-dessus des barres
+    svg.selectAll("text.bar")
+       .data(vPop)
+       .enter()
+       .append("text")
+       .attr("class", "bar")
+       .attr("x", (d,i) => x(vCom[i]) + x.bandwidth()/2)
+       .attr("y", d => y(d) - 5)
+       .attr("text-anchor", "middle")
+       .text(d => d);
+
+    // Axe X avec noms des communes
+    svg.append("g")
+       .attr("transform", `translate(0,${height - margin.bottom})`)
+       .call(d3.axisBottom(x))
+       .selectAll("text")
+       .attr("transform", "rotate(-30)")
+       .style("text-anchor", "end");
+
+    // Axe Y
+    svg.append("g")
+       .attr("transform", `translate(${margin.left},0)`)
+       .call(d3.axisLeft(y));
+}
+</script>
+</head>
+
+<body>
+
+<button onclick="rest()">API population</button>
+<input type="text" id="departement" placeholder="Numéro département"/>
+<br><br>
+<input type="text" id="popu_globale" placeholder="Population globale"/>
+
+<table>
+    <thead>
+        <tr>
+            <th>Ville</th>
+            <th>Classement</th>
+            <th>Code postal</th>
+            <th>Population</th>
+        </tr>
+    </thead>
+    <tbody id="rendu"></tbody>
+</table>
+
+<!-- Conteneur pour D3.js -->
+<div id="graphique" style="width: 600px; margin:auto; margin-top:20px;"></div>
+
+</body>
+</html>

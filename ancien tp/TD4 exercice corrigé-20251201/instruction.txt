@@ -1,0 +1,28 @@
+start docker desktop to have the deamon (skip login if you want)
+
+
+docker build -t my-node-server .
+
+
+docker run -p 3000:3000 my-node-server
+
+
+
+we see Server running at http://0.0.0.0:3000/
+
+
+run http://localhost:3000/
+
+
+--If we want to push
+
+docker login
+
+
+docker images
+
+
+docker tag my-node-server username/my-node-server:latest
+
+
+docker push bniang/my-node-server:latest

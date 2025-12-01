@@ -1,0 +1,27 @@
+ <!DOCTYPE html>
+<head>
+  <meta content="text/html; charset=UTF-8"/>
+  <title> Test DOM- accès à un élément d'un formulaire </title>
+</head>
+<body>    
+  <form id="Form1">
+      <input value="Le formulaire Form1" />
+  </form>
+
+    <form id="Form2">
+      <input value="Le formulaire Form2" />
+    </form>
+
+    <form id="Form3">
+      <input
+        type="button" onclick="alert(document.forms[2].id);" value="Le formulaire Form 3" />
+    </form>
+
+    <script language = JavaScript>
+       var selectElement = document.forms.Form2.elements[0].value;
+        alert(selectElement);
+        alert(document.forms[2].elements[0].value);
+    </script>
+
+</body>
+</html> 
