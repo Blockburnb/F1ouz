@@ -1,0 +1,391 @@
+// app.js — simple dashboard loading CSVs from ../data and computing requested stats
+
+const dataPath = "../data/"; // use forward slashes for browser fetch URLs
+
+async function loadCsv(name){
+  const res = await fetch(dataPath + name);
+  return d3.csvParse(await res.text());
+}
+
+async function init(){
+  const [drivers, constructors, races, results, circuits, qualifying, pit_stops, lap_times] = await Promise.all([
+    loadCsv('drivers.csv'),
+    loadCsv('constructors.csv'),
+    loadCsv('races.csv'),
+    loadCsv('results.csv'),
+    loadCsv('circuits.csv'),
+    loadCsv('qualifying.csv'),
+    loadCsv('pit_stops.csv'),
+    loadCsv('lap_times.csv')
+  ]);
+
+  // Helpers
+  const find = (arr, key, id) => arr && arr.find(x => String(x[key]) === String(id));
+  const getName = (row, table) => {
+    if(!row) return 'Inconnu';
+    if(table === 'drivers') return ((row.forename || '') + ' ' + (row.surname || '')).trim();
+    if(table === 'constructors') return row.name || 'Inconnu';
+    return String(row);
+  }
+
+  // global UI state
+  const state = { mode: 'driver', circuitId: null, year: null };
+
+  // read palette from CSS variables so charts match brand
+  const css = window.getComputedStyle(document.documentElement);
+  const accent = (css.getPropertyValue('--accent') || '#e10600').trim();
+  const dark = (css.getPropertyValue('--dark') || '#15151e').trim();
+  const panel = (css.getPropertyValue('--panel') || '#ffffff').trim();
+  const muted = (css.getPropertyValue('--muted') || '#666666').trim();
+  // fallback palette with brand accent first
+  const palette = [accent, '#2b8cc4', '#6aa0d8', '#4caf50', '#f39c12', '#9b59b6', dark, '#95a5a6', '#f1c40f', '#ff6b6b'];
+
+  // small reusable bar chart drawer
+  function drawBarChart(svgSelector, data, {labelKey='name', valueKey='value', top=10} = {}){
+    const svg = d3.select(svgSelector);
+    svg.selectAll('*').remove();
+    const width = svg.node().clientWidth;
+    const height = svg.node().clientHeight;
+    const margin = {top:20,right:10,bottom:40,left:140};
+    const w = Math.max(50, width - margin.left - margin.right);
+    const h = Math.max(50, height - margin.top - margin.bottom);
+
+    const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+    const x = d3.scaleLinear().range([0,w]).domain([0, d3.max(data, d=>d[valueKey]) || 1]);
+    const y = d3.scaleBand().range([0,h]).domain(data.slice(0,top).map(d=>d[labelKey])).padding(0.1);
+
+    // color scale for bars based on labels
+    const color = d3.scaleOrdinal().domain(data.map(d=>d[labelKey])).range(palette);
+
+    g.append('g').selectAll('rect').data(data.slice(0,top)).join('rect')
+      .attr('y', d=>y(d[labelKey]))
+      .attr('height', y.bandwidth())
+      .attr('x',0)
+      .attr('width', d=>x(d[valueKey]))
+      .attr('fill', d=>color(d[labelKey]));
+
+    g.append('g').call(d3.axisLeft(y)).selectAll('text').style('font-size','12px').style('fill', dark);
+    g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(5)).selectAll('text').style('fill', muted);
+
+    // labels
+    g.selectAll('.label').data(data.slice(0,top)).join('text')
+      .attr('x', d=>x(d[valueKey]) + 6)
+      .attr('y', d=>y(d[labelKey]) + y.bandwidth()/2 + 4)
+      .text(d=>d[valueKey])
+      .style('font-size','11px')
+      .style('fill', muted);
+  }
+
+  // pie chart drawer
+  function drawPieChart(svgSelector, data, {labelKey='name', valueKey='value', top=8} = {}){
+    const svg = d3.select(svgSelector);
+    svg.selectAll('*').remove();
+    const width = svg.node().clientWidth;
+    const height = svg.node().clientHeight;
+    const radius = Math.min(width, height) / 2 - 10;
+    const g = svg.append('g').attr('transform', `translate(${width/2},${height/2})`);
+
+    // sort and keep top, aggregate rest
+    const sorted = data.slice().sort((a,b)=>b[valueKey]-a[valueKey]);
+    const topData = sorted.slice(0, top);
+    const others = sorted.slice(top).reduce((s,d)=>s + (d[valueKey]||0), 0);
+    if(others > 0) topData.push({id:'other', name:'Autres', value: others});
+
+    const pie = d3.pie().value(d=>d[valueKey]).sort(null);
+    const arcs = pie(topData);
+    // color scale using site palette
+    const color = d3.scaleOrdinal().domain(topData.map(d=>d[labelKey])).range(palette);
+
+    const arc = d3.arc().innerRadius(0).outerRadius(radius);
+
+    const path = g.selectAll('path').data(arcs).join('path')
+      .attr('d', arc)
+      .attr('fill', d=>color(d.data[labelKey]))
+      .attr('stroke', panel)
+      .attr('stroke-width', 1)
+      .on('mouseenter', function(event,d){
+        const txt = `${d.data[labelKey]} : ${d.data[valueKey]}`;
+        tooltip.style('display','block').html(txt);
+      })
+      .on('mousemove', function(event){ tooltip.style('left', (event.clientX+12)+'px').style('top', (event.clientY+12)+'px'); })
+      .on('mouseleave', function(){ tooltip.style('display','none'); });
+
+    // legend rendered as a separate DOM element under the chart container to avoid overlapping
+    const container = d3.select(svgSelector).node().parentNode;
+    let legendDiv = d3.select(container).select('.legend');
+    if(!legendDiv.node()) legendDiv = d3.select(container).append('div').attr('class','legend');
+    // populate legend
+    legendDiv.html('');
+    const items = legendDiv.selectAll('.legend-item').data(topData).join('div').attr('class','legend-item');
+    items.append('span').attr('class','legend-swatch').style('background', d=>color(d[labelKey]));
+    items.append('span').attr('class','legend-label').html(d=>`${d[labelKey]} (${d[valueKey]})`).style('color', dark);
+  }
+
+  // bubble (scatter) chart drawer
+  function drawBubbleChart(svgSelector, data, {xKey='count', yKey='value', rKey='count', labelKey='name', top=60} = {}){
+    const svg = d3.select(svgSelector);
+    svg.selectAll('*').remove();
+    const width = svg.node().clientWidth;
+    const height = svg.node().clientHeight;
+    const margin = {top:20,right:10,bottom:40,left:60};
+    const w = width - margin.left - margin.right;
+    const h = height - margin.top - margin.bottom;
+    const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
+
+    const plot = data.slice(0, top).filter(d=>d[yKey]!=null && d[xKey]!=null);
+    if(plot.length===0) return;
+
+    const x = d3.scaleLinear().domain([0, d3.max(plot, d=>+d[xKey])]).range([0,w]).nice();
+    const y = d3.scaleLinear().domain([d3.max(plot,d=>+d[yKey]), d3.min(plot,d=>+d[yKey])]).range([h,0]).nice();
+    const r = d3.scaleSqrt().domain([d3.min(plot,d=>+d[rKey]), d3.max(plot,d=>+d[rKey])]).range([4,22]);
+
+    // axes
+    g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x)).selectAll('text').style('fill', muted);
+    g.append('g').call(d3.axisLeft(y)).selectAll('text').style('fill', muted);
+
+    // color scale
+    const color = d3.scaleOrdinal().domain(plot.map(d=>d[labelKey])).range(palette);
+
+    const nodes = g.selectAll('circle').data(plot).join('circle')
+      .attr('cx', d=>x(+d[xKey]))
+      .attr('cy', d=>y(+d[yKey]))
+      .attr('r', d=>r(+d[rKey]))
+      .attr('fill', d=>color(d[labelKey]))
+      .attr('opacity',0.85)
+      .on('mouseenter', function(event,d){
+        const txt = `${d[labelKey]}\nCount: ${d[xKey]}\nBest: ${d[yKey]} ms`;
+        tooltip.style('display','block').html(txt.replace(/\n/g,'<br/>'));
+      })
+      .on('mousemove', function(event){ tooltip.style('left', (event.clientX+12)+'px').style('top', (event.clientY+12)+'px'); })
+      .on('mouseleave', function(){ tooltip.style('display','none'); });
+
+    // axis labels
+    svg.append('text').attr('x', margin.left + w/2).attr('y', height-4).attr('text-anchor','middle').text('Nombre de pitstops (observés)').style('fill', muted);
+    svg.append('text').attr('transform', 'rotate(-90)').attr('x', - (margin.top + h/2)).attr('y', 12).attr('text-anchor','middle').text('Meilleur pit (ms)').style('fill', muted);
+  }
+
+  // compute aggregated data according to state.mode and optional circuit filter
+  function computeStandings(){
+    const yearFilteredRaces = state.year ? races.filter(r=>String(r.year)===String(state.year)).map(r=>r.raceId) : races.map(r=>r.raceId);
+    const filteredResults = results.filter(rs=>yearFilteredRaces.includes(rs.raceId) && (!state.circuitId || String((races.find(rr=>rr.raceId===rs.raceId)||{}).circuitId) === String(state.circuitId)));
+    if(state.mode === 'driver'){
+      const resultsByDriver = d3.rollup(filteredResults, v=>v.length, d=>d.driverId);
+      return Array.from(resultsByDriver, ([id,count])=>({id, name: getName(find(drivers,'driverId',id),'drivers'), value:count})).sort((a,b)=>b.value-a.value);
+    }
+    // constructor mode (default)
+    const resultsByConstructor = d3.rollup(filteredResults, v=>v.length, d=>d.constructorId);
+    return Array.from(resultsByConstructor, ([id,count])=>({id, name: getName(find(constructors,'constructorId',id),'constructors'), value:count})).sort((a,b)=>b.value-a.value);
+  }
+
+  function computeWinsByCircuit(){
+    const yearRaceIds = state.year ? races.filter(r=>String(r.year)===String(state.year)).map(r=>r.raceId) : races.map(r=>r.raceId);
+    const raceList = state.circuitId ? races.filter(r=>String(r.circuitId)===String(state.circuitId) && yearRaceIds.includes(r.raceId)).map(r=>r.raceId) : yearRaceIds;
+    const filtered = results.filter(rs=>raceList.includes(rs.raceId));
+    const wins = filtered.filter(r=>r.position==='1');
+
+    if(state.mode === 'driver'){
+      const winsByDriver = d3.rollup(wins, v=>v.length, d=>d.driverId);
+      return Array.from(winsByDriver, ([id,count])=>({id, name:getName(find(drivers,'driverId',id),'drivers'), value:count})).sort((a,b)=>b.value-a.value);
+    }
+    // constructor mode
+    const winsByCons = d3.rollup(wins, v=>v.length, d=>d.constructorId);
+    return Array.from(winsByCons, ([id,count])=>({id, name:getName(find(constructors,'constructorId',id),'constructors'), value:count})).sort((a,b)=>b.value-a.value);
+  }
+
+  function computeRecords(){
+    // fastest lap by circuit -> aggregate to entity depending on mode and year
+    const fastestByCircuit = {};
+    lap_times.forEach(l=>{
+      const race = races.find(r=>r.raceId===l.raceId);
+      if(!race) return;
+      if(state.year && String(race.year) !== String(state.year)) return;
+      if(state.circuitId && String(race.circuitId) !== String(state.circuitId)) return;
+      const cid = race.circuitId;
+      const ms = l.milliseconds ? +l.milliseconds : null;
+      if(ms==null) return;
+      if(!fastestByCircuit[cid] || ms < fastestByCircuit[cid].ms) fastestByCircuit[cid] = {ms, driverId: l.driverId, raceId: l.raceId};
+    });
+    const rows = [];
+    Object.entries(fastestByCircuit).forEach(([cid,rec])=>{
+      const circuit = circuits.find(c=>String(c.circuitId)===String(cid));
+      if(!circuit) return;
+      if(state.mode === 'driver'){
+        rows.push({name: circuit.name, value: rec.ms, sub: getName(find(drivers,'driverId',rec.driverId),'drivers')});
+      } else {
+        // constructor mode: find constructor for that driver in that race using results
+        const resRow = results.find(r=>String(r.raceId)===String(rec.raceId) && String(r.driverId)===String(rec.driverId));
+        const consId = resRow ? resRow.constructorId : null;
+        rows.push({name: circuit.name, value: rec.ms, sub: getName(find(constructors,'constructorId',consId),'constructors')});
+      }
+    });
+    return rows.sort((a,b)=>a.value-b.value);
+  }
+
+  function computePoles(){
+    const poles = qualifying.filter(q=>q.position==='1' && (!state.circuitId || String(races.find(r=>String(r.raceId)===String(q.raceId)).circuitId) === String(state.circuitId)) && (!state.year || String(races.find(r=>String(r.raceId)===String(q.raceId)).year) === String(state.year)));
+    if(state.mode === 'driver'){
+      const by = d3.rollup(poles, v=>v.length, d=>d.driverId);
+      return Array.from(by, ([id,count])=>({id, name:getName(find(drivers,'driverId',id),'drivers'), value:count})).sort((a,b)=>b.value-a.value);
+    }
+    // constructor mode
+    const by = d3.rollup(poles, v=>v.length, d=> d.constructorId ? d.constructorId : (results.find(r=>String(r.raceId)===String(d.raceId) && String(r.driverId)===String(d.driverId)) || {}).constructorId );
+    return Array.from(by, ([id,count])=>({id, name:getName(find(constructors,'constructorId',id),'constructors'), value:count})).sort((a,b)=>b.value-a.value);
+  }
+
+  function computePitStops(){
+    const pits = pit_stops.filter(p=>p.milliseconds && (!state.circuitId || String((races.find(r=>String(r.raceId)===String(p.raceId))||{}).circuitId) === String(state.circuitId)) && (!state.year || String((races.find(r=>String(r.raceId)===String(p.raceId))||{}).year) === String(state.year)));
+    if(state.mode === 'driver'){
+      // compute fastest and count per driver
+      const grouped = d3.group(pits, d=>d.driverId);
+      const rows = Array.from(grouped, ([id,items])=>({id, name:getName(find(drivers,'driverId',id),'drivers'), value: d3.min(items, d=>+d.milliseconds), count: items.length})).sort((a,b)=>a.value-b.value);
+      return rows;
+    }
+    // constructor mode
+    const grouped = d3.group(pits, d=> d.constructorId ? d.constructorId : (results.find(r=>String(r.raceId)===String(d.raceId) && String(r.driverId)===String(d.driverId))||{}).constructorId);
+    const rows = Array.from(grouped, ([id,items])=>({id, name:getName(find(constructors,'constructorId',id),'constructors'), value: d3.min(items, d=>+d.milliseconds), count: items.length})).sort((a,b)=>a.value-b.value);
+    return rows;
+  }
+
+  // update all charts
+  function updateAll(){
+    // standings
+    const standingsData = computeStandings();
+    drawBarChart('#standingsChart svg', standingsData, {labelKey:'name', valueKey:'value', top:10});
+    // wins
+    const winsData = computeWinsByCircuit();
+    drawPieChart('#winsChart svg', winsData, {labelKey:'name', valueKey:'value', top:8});
+    // records
+    const recs = computeRecords();
+    // show fastest laps per circuit as bars
+    const recData = recs.map(r=>({name:r.name + ' ('+ (r.sub||'') +')', value:r.value}));
+    drawBarChart('#recordsChart svg', recData, {labelKey:'name', valueKey:'value', top:8});
+    // poles
+    const polesData = computePoles();
+    drawBarChart('#poleChart svg', polesData, {labelKey:'name', valueKey:'value', top:8});
+    // pits
+    const pitD = computePitStops();
+    // draw bubble for pitstops
+    drawBubbleChart('#pitDriverChart svg', pitD, {xKey:'count', yKey:'value', rKey:'count', labelKey:'name', top:60});
+    // constructors chart: show constructor-specific pits
+    const pitCons = computePitStops();
+    drawBarChart('#pitConstructorChart svg', pitCons, {labelKey:'name', valueKey:'value', top:8});
+    adjustGrid();
+  }
+
+  // adaptive grid: choose number of columns close to square layout and limited by available width
+  function adjustGrid(){
+    const container = document.querySelector('.dashboard-grid');
+    if(!container) return;
+    const cards = Array.from(container.querySelectorAll('.card')).filter(c=> c.offsetParent !== null); // visible cards
+    const n = Math.max(1, cards.length);
+    const containerWidth = container.clientWidth || container.getBoundingClientRect().width || window.innerWidth;
+    const minCardWidth = 300; // minimum comfortable card width in px
+
+    // how many columns can we fit by width
+    const maxColsByWidth = Math.max(1, Math.floor(containerWidth / minCardWidth));
+
+    let cols;
+    // Prefer a 3-column layout when possible (and avoid cards stretched too wide)
+    if(maxColsByWidth >= 3){
+      // if we have at least 3 cards, prefer 3 columns so layout tends to 3x2 when ~6 cards
+      if(n >= 3) cols = Math.min(3, n);
+      else cols = n; // 1 or 2 cards -> use 1 or 2 columns
+    } else {
+      // narrow screen: use as many columns as can fit but not more than cards
+      cols = Math.min(Math.max(1, maxColsByWidth), n);
+    }
+
+    // final clamp
+    cols = Math.max(1, Math.min(cols, n));
+
+    container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  }
+
+  // call adjustGrid after render and on resize
+  window.addEventListener('resize', ()=>{ adjustGrid(); setTimeout(adjustGrid, 200); });
+
+  // wire UI -> state
+  const btnDrivers = document.getElementById('btnDrivers');
+  const btnConstructors = document.getElementById('btnConstructors');
+  function setMode(m){ state.mode = m; btnDrivers.classList.toggle('active', m==='driver'); btnConstructors.classList.toggle('active', m==='constructor'); updateAll(); }
+  btnDrivers.onclick = ()=> setMode('driver');
+  btnConstructors.onclick = ()=> setMode('constructor');
+
+  // circuit selector: add 'All circuits' option
+  const circuitSelect = document.getElementById('circuitSelect');
+  const allOpt = document.createElement('option'); allOpt.value = ''; allOpt.text = 'Tous les circuits'; circuitSelect.appendChild(allOpt);
+  circuits.forEach(c=>{ const opt = document.createElement('option'); opt.value = c.circuitId; opt.text = c.name; circuitSelect.appendChild(opt); });
+  circuitSelect.onchange = ()=>{ state.circuitId = circuitSelect.value || null; updateAll(); };
+
+  // year selector
+  const yearSelect = document.getElementById('yearSelect');
+  const years = Array.from(new Set(races.map(r=>r.year))).sort((a,b)=>b-a);
+  const allY = document.createElement('option'); allY.value=''; allY.text='Toutes les années'; yearSelect.appendChild(allY);
+  years.forEach(y=>{ const o=document.createElement('option'); o.value=y; o.text=y; yearSelect.appendChild(o); });
+  yearSelect.onchange = ()=>{ state.year = yearSelect.value || null; updateAll(); };
+
+  // add tooltip for info icons
+  const tooltip = d3.select('body').append('div').attr('class','tooltip');
+  d3.selectAll('.info').on('mouseenter', function(event){
+    const desc = this.getAttribute('data-desc') || '';
+    tooltip.style('display','block').html(desc);
+  }).on('mousemove', function(event){
+    const x = event.clientX + 12;
+    const y = event.clientY + 12;
+    tooltip.style('left', x + 'px').style('top', y + 'px');
+  }).on('mouseleave', function(){ tooltip.style('display','none'); });
+
+  // initial render
+  // set default active button style
+  setMode('driver');
+  updateAll();
+  adjustGrid();
+
+  // helper to expand a card
+  function makeCardExpandable(){
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+      card.style.cursor = 'zoom-in';
+      card.addEventListener('click', function(ev){
+        // prevent clicks on controls/info icons from expanding
+        if(ev.target.closest('.info') || ev.target.closest('.controls') || ev.target.closest('button') || ev.target.closest('select')) return;
+        openExpanded(card);
+      });
+    });
+  }
+
+  function openExpanded(card){
+    // overlay
+    const overlay = document.createElement('div'); overlay.className='overlay'; document.body.appendChild(overlay);
+    // clone card into expanded container or add class
+    card.classList.add('expanded');
+    // close button
+    let close = card.querySelector('.close-btn');
+    if(!close){
+      close = document.createElement('button'); close.className='close-btn'; close.innerHTML='✕'; card.appendChild(close);
+    }
+    close.addEventListener('click', ()=> closeExpanded(card, overlay));
+    // ESC to close
+    function escHandler(e){ if(e.key === 'Escape') closeExpanded(card, overlay); }
+    document.addEventListener('keydown', escHandler);
+    overlay.addEventListener('click', ()=> closeExpanded(card, overlay));
+    // re-render charts to fit new size (use timeout so CSS applied)
+    setTimeout(()=>{ updateAll(); }, 120);
+    // store handler for removal
+    card._escHandler = escHandler;
+  }
+
+  function closeExpanded(card, overlay){
+    if(overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    card.classList.remove('expanded');
+    const close = card.querySelector('.close-btn'); if(close) close.remove();
+    if(card._escHandler) document.removeEventListener('keydown', card._escHandler);
+    setTimeout(()=>{ updateAll(); }, 120);
+  }
+
+  // after initial render wire expand handlers
+  makeCardExpandable();
+
+}
+
+init().catch(err=>{ console.error(err); document.body.insertAdjacentHTML('beforeend', '<p style="color:red">Erreur: '+err.message+'</p>') });

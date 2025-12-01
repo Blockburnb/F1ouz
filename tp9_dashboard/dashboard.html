@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TP9 - Tableau de bord F1ouz</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>TP9 — Tableau de bord F1ouz</h1>
+    <p>Ouvrir ce fichier dans un navigateur (ou via un serveur local) pour visualiser les statistiques.</p>
+  </header>
+
+  <!-- global filters moved here (sous le titre) -->
+  <div class="global-filters">
+    <div class="controls">
+      <button id="btnDrivers">Par pilote</button>
+      <button id="btnConstructors">Par écurie</button>
+      <!-- removed combo button (driver+constructor) as not used anymore -->
+      <span class="info" data-desc="Filtres globaux : choisissez le mode d'agrégation (par pilote / par écurie). Ces boutons mettent à jour tous les graphiques.">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="#e6f0fb" stroke="#c7ddf5" stroke-width="1" />
+          <rect x="11.2" y="7" width="1.6" height="6" fill="#0b2035" rx="0.2" />
+          <circle cx="12" cy="17" r="1" fill="#0b2035" />
+        </svg>
+      </span>
+    </div>
+    <div class="controls">
+      <label for="circuitSelect" class="sr-only">Circuit</label>
+      <select id="circuitSelect"></select>
+      <!-- year filter -->
+      <label for="yearSelect" class="sr-only">Année</label>
+      <select id="yearSelect"></select>
+      <span class="info" data-desc="Sélectionnez un circuit pour filtrer les courses affichées dans les graphiques. Utilisez le sélecteur année pour limiter aux courses d'une année précise.">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="#e6f0fb" stroke="#c7ddf5" stroke-width="1" />
+          <rect x="11.2" y="7" width="1.6" height="6" fill="#0b2035" rx="0.2" />
+          <circle cx="12" cy="17" r="1" fill="#0b2035" />
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <main class="dashboard-grid">
+    <section id="standings" class="card" tabindex="0">
+      <h2>Classements <span class="info" data-desc="Classements : nombre de participations / résultats par entité selon le mode sélectionné (top affichés).">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="#e6f0fb" stroke="#c7ddf5" stroke-width="1" />
+          <rect x="11.2" y="7" width="1.6" height="6" fill="#0b2035" rx="0.2" />
+          <circle cx="12" cy="17" r="1" fill="#0b2035" />
+        </svg>
+      </span></h2>
+      <div class="chart" id="standingsChart"><svg></svg></div>
+    </section>
+
+    <section id="winsByCircuit" class="card" tabindex="0">
+      <h2>Victoires & podiums par circuit (nombre) <span class="info" data-desc="Victoires & podiums : part des victoires (1re place) pour le circuit et l'année sélectionnés. Guide de lecture : chaque tranche du camembert représente la part de victoires d'une entité (pilote/écurie/équipe selon le filtre global). Passez la souris sur une tranche pour voir le nombre exact. Les petites parts sont regroupées dans 'Autres'.">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="#e6f0fb" stroke="#c7ddf5" stroke-width="1" />
+          <rect x="11.2" y="7" width="1.6" height="6" fill="#0b2035" rx="0.2" />
+          <circle cx="12" cy="17" r="1" fill="#0b2035" />
+        </svg>
+      </span></h2>
+      <div class="chart" id="winsChart"><svg></svg></div>
+    </section>
+
+    <section id="trackRecords" class="card" tabindex="0">
+      <h2>Record de chaque piste (fastest lap) — temps (ms) <span class="info" data-desc="Record de piste : meilleur tour chronométré (en ms) par piste. Filtrable par année et circuit.">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="#e6f0fb" stroke="#c7ddf5" stroke-width="1" />
+          <rect x="11.2" y="7" width="1.6" height="6" fill="#0b2035" rx="0.2" />
+          <circle cx="12" cy="17" r="1" fill="#0b2035" />
+        </svg>
+      </span></h2>
+      <div class="chart" id="recordsChart"><svg></svg></div>
+    </section>
+
+    <section id="poleStats" class="card" tabindex="0">
+      <h2>Statistiques pole position (qualification) (nombre) <span class="info" data-desc="Pole positions : nombre de poles obtenues en qualification par entité selon le mode et filtres appliqués.">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="#e6f0fb" stroke="#c7ddf5" stroke-width="1" />
+          <rect x="11.2" y="7" width="1.6" height="6" fill="#0b2035" rx="0.2" />
+          <circle cx="12" cy="17" r="1" fill="#0b2035" />
+        </svg>
+      </span></h2>
+      <div class="chart" id="poleChart"><svg></svg></div>
+    </section>
+
+    <!-- Pitstops séparés en deux zones -->
+    <section id="pitStopsDriver" class="card" tabindex="0">
+      <h2>Pitstops les plus rapides — pilote (ms) <span class="info" data-desc="Pitstops (pilote) : bubble chart montrant la performance des pitstops. Guide de lecture : x = nombre d'observations de pitstops pour la station (plus à droite = plus de samples), y = meilleur temps observé (ms) (en bas = plus rapide), taille du point = nombre d'observations. Un point bas et large indique un pilote rapide et souvent en pit; survolez pour détails.">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="#e6f0fb" stroke="#c7ddf5" stroke-width="1" />
+          <rect x="11.2" y="7" width="1.6" height="6" fill="#0b2035" rx="0.2" />
+          <circle cx="12" cy="17" r="1" fill="#0b2035" />
+        </svg>
+      </span></h2>
+      <div class="chart" id="pitDriverChart"><svg></svg></div>
+    </section>
+
+    <section id="pitStopsConstructor" class="card" tabindex="0">
+      <h2>Pitstops les plus rapides — écurie (ms) <span class="info" data-desc="Pitstops (écurie) : bubble chart montrant la performance des pitstops par écurie. Guide de lecture : x = nombre d'observations, y = meilleur temps (ms). Les points plus bas sont meilleurs (temps plus faibles). Taille du point indique le nombre d'observations. Survolez pour voir nom, meilleur temps et nombre d'observations.">
+        <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" fill="#e6f0fb" stroke="#c7ddf5" stroke-width="1" />
+          <rect x="11.2" y="7" width="1.6" height="6" fill="#0b2035" rx="0.2" />
+          <circle cx="12" cy="17" r="1" fill="#0b2035" />
+        </svg>
+      </span></h2>
+      <div class="chart" id="pitConstructorChart"><svg></svg></div>
+    </section>
+  </main>
+
+  <footer>
+    <small>Datasets: dossier data/ (fournis dans le workspace)</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
