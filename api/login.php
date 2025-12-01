@@ -13,10 +13,14 @@ $stmt->execute([$username]);
 $user = $stmt->fetch();
 
 if ($user) {
-    // 2. On vérifie le mot de passe haché
-    // password_verify ré-hache le mot de passe fourni avec le "sel" contenu dans $user['password']
-    // et compare les résultats pour garantir l'authenticité.
-    if (password_verify($password, $user['password'])) {
+    // --- EXCEPTION DEMANDÉE ---
+    // On vérifie manuellement si c'est admin/admin ou toto/toto
+    // Cela permet de contourner la vérification de hachage pour ces comptes de test
+    $isLegacyAdmin = ($username === 'admin' && $password === 'admin');
+    $isLegacyToto  = ($username === 'toto' && $password === 'toto');
+
+    // 2. On valide si c'est une exception OU si le mot de passe haché correspond
+    if ($isLegacyAdmin || $isLegacyToto || password_verify($password, $user['password'])) {
         echo json_encode([
             'success' => true, 
             'role' => $user['role'], 

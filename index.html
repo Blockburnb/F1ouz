@@ -12,10 +12,7 @@
     <!-- Barre de Navigation Dynamique -->
     <nav class="navbar">
         <div class="logo">🏁 F1 Analytics</div>
-        
-        <!-- C'est ici que le JS va injecter le bon bouton -->
         <div id="nav-auth" class="nav-links">
-            <!-- Par défaut (si JS désactivé), on propose la connexion -->
             <a href="login.html" class="btn-login">Connexion Membre</a>
         </div>
     </nav>
@@ -35,14 +32,25 @@
         </div>
     </header>
 
-    <!-- Tableau Filtrable (Visible par tous) -->
+    <!-- Tableau Filtrable -->
     <main class="container">
         <section class="data-table-section">
             <div class="section-header">
                 <h2>Annuaire Officiel des Pilotes</h2>
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Rechercher un pilote..." onkeyup="filterTable()">
-                    <span class="search-icon">🔍</span>
+                
+                <!-- Zone de Filtres -->
+                <div class="filters-box">
+                    <!-- Filtre Nationalité (Nouveau) -->
+                    <select id="nationalityFilter" onchange="filterTable()">
+                        <option value="">🌍 Toutes les nationalités</option>
+                        <!-- Rempli par JS -->
+                    </select>
+
+                    <!-- Recherche Texte -->
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Rechercher un nom..." onkeyup="filterTable()">
+                        <span class="search-icon">🔍</span>
+                    </div>
                 </div>
             </div>
 

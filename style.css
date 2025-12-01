@@ -192,3 +192,59 @@ thead th {
 td { padding: 10px 12px; border-bottom: 1px solid #eee; }
 tr:hover { background-color: #fff5f5; }
 .wiki-link { color: #e10600; text-decoration: none; }
+
+filters-box {
+    display: flex;
+    gap: 15px; /* Espace entre le select et la recherche */
+    align-items: center;
+}
+
+/* Style du Select (Menu déroulant) */
+#nationalityFilter {
+    padding: 10px;
+    border-radius: 20px; /* Arrondi comme la barre de recherche */
+    border: 1px solid #ccc;
+    font-size: 14px;
+    background-color: white;
+    cursor: pointer;
+    min-width: 200px;
+}
+
+#nationalityFilter:focus {
+    outline: none;
+    border-color: #e10600;
+}
+
+/* Ajustement Search Box */
+.search-box input {
+    /* Largeur un peu réduite si besoin pour tout faire tenir */
+    width: 220px; 
+}
+
+.section-header {
+    /* S'assurer que ça passe à la ligne sur mobile */
+    flex-wrap: wrap; 
+}
+
+/* ... Le reste du CSS (Tableau, Scroll) reste identique ... */
+
+/* --- RAPPEL CSS GLOBAL --- */
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background-color: #f3f3f3; margin: 0; }
+.navbar { background-color: #15151e; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; color: white; }
+.btn-login { background-color: #e10600; color: white; padding: 8px 20px; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
+.btn-logout { background: transparent; border: 1px solid #666; color: #ccc; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+.container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+.data-table-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.table-container { max-height: 450px; overflow-y: auto; border: 1px solid #eee; }
+table { width: 100%; border-collapse: collapse; }
+thead th { position: sticky; top: 0; background-color: #15151e; color: white; padding: 12px; text-align: left; z-index: 10; border-bottom: 3px solid #e10600; }
+td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+tr:hover { background-color: #fff5f5; }
+.wiki-link { color: #e10600; text-decoration: none; }
+.search-box { position: relative; }
+.search-box input { padding: 8px 35px 8px 15px; border-radius: 20px; border: 1px solid #ccc; }
+.search-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+.hero-section { background: #15151e; color: white; text-align: center; padding: 60px 20px; border-bottom: 4px solid #e10600; }
+.stats-badges .badge { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 15px; margin: 0 5px; border: 1px solid #555; display: inline-block; }
