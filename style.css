@@ -1,0 +1,94 @@
+/* style.css */
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f3f3f3; /* Gris clair fond de page */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Prend toute la hauteur de l'écran */
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.login-card {
+    background-color: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
+    border-top: 5px solid #e10600; /* Rouge F1 */
+}
+
+h1 {
+    margin: 0;
+    color: #15151e;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 0.9em;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px; /* Espace intérieur */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; /* Pour que le padding ne casse pas la largeur */
+    font-size: 1rem;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    background-color: #e10600; /* Rouge F1 */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.btn-login:hover {
+    background-color: #b30500; /* Rouge plus foncé au survol */
+}
+
+.error {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: 15px;
+    min-height: 20px; /* Évite que ça bouge quand le texte apparait */
+}
+
+.footer-text {
+    margin-top: 20px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.footer-text a {
+    color: #e10600;
+    text-decoration: none;
+    font-weight: bold;
+}

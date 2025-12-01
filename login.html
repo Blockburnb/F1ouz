@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - F1 Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="login-card">
+            <h1>F1 Dashboard</h1>
+            <p class="subtitle">Connexion à l'espace pilote</p>
+
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username">Identifiant</label>
+                    <input type="text" id="username" name="username" placeholder="Entrez votre pseudo" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" placeholder="Entrez votre mot de passe" required>
+                </div>
+
+                <button type="submit" class="btn-login">Se connecter</button>
+            </form>
+
+            <p id="error-message" class="error"></p>
+            
+            <p class="footer-text">
+                Pas encore de compte ? <a href="#">S'inscrire</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
