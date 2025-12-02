@@ -215,8 +215,139 @@ async function init(){
     // defs for clipPaths
     const defs = svg.append('defs');
 
+    // simple in-memory cache for avatar fetch results
+    const avatarCache = {};
+
+    // persistent cache across reloads (localStorage) to avoid repeated fetch attempts
+    const persistentCacheKey = 'f1_headshot_cache_v1';
+    let persistentCache = {};
+    try{ persistentCache = JSON.parse(localStorage.getItem(persistentCacheKey) || '{}'); } catch(e){ persistentCache = {}; }
+
+    // helper: apply team color to dashboard theme (updates CSS var and palette[0])
+    function applyTeamColour(teamColour){
+      if(!teamColour) return;
+      let hex = String(teamColour).replace('#','').trim();
+      if(!/^[0-9a-fA-F]{6}$/.test(hex)) return; // ignore invalid
+      hex = '#'+hex.toLowerCase();
+      try{ document.documentElement.style.setProperty('--accent', hex); } catch(e){}
+      // update in-memory palette first color so charts pick it up on next draw
+      try{ palette[0] = hex; } catch(e){}
+    }
+
+    // function to request local headshot server to fetch and save headshot
+    async function requestLocalServerFetch(driverId){
+      try{
+        const url = `http://localhost:8001/fetch_headshot?driverId=${encodeURIComponent(driverId)}`;
+        const resp = await fetch(url);
+        if(!resp.ok) return false;
+        const j = await resp.json();
+        return j.status === 'saved' || j.status === 'exists';
+      } catch(e){ return false; }
+    }
+
+    // resolve a headshot url by checking local files under data/headshots/<driverId> first
+    async function resolveHeadshotLocal(driverId){
+      if(!driverId) return null;
+      const base = dataPath + 'headshots/' + driverId;
+      const candidates = [base + '.jpg', base + '.png', base + '.jpeg', base + '.webp'];
+      for(const url of candidates){
+        try{
+          // try HEAD first
+          const r = await fetch(url, {method:'HEAD'});
+          if(r.ok) return url;
+        } catch(e){ /* ignore */ }
+      }
+      // if not found, ask local server to fetch it (best-effort)
+      const tried = await requestLocalServerFetch(driverId);
+      if(tried){
+        // small delay to allow file to be written by server
+        await new Promise(res=>setTimeout(res, 350));
+        for(const url of candidates){
+          try{ const r = await fetch(url, {method:'HEAD'}); if(r.ok) return url; } catch(e){}
+        }
+      }
+      return null;
+    }
+
+    // fetch driver metadata (headshot url + team colour) from OpenF1 API or fallbacks
+    async function tryFetchOpenF1Image(driverId, driverRef, driverNumber, driverName){
+      const cacheKey = driverId || driverRef || driverName || null;
+      // return from persistent cache if present (could be null for negative)
+      if(cacheKey && persistentCache[cacheKey] !== undefined){
+        return persistentCache[cacheKey]; // object or null
+      }
+
+      async function fetchFromApi(queryUrl){
+        try{
+          const resp = await fetch(queryUrl, {mode: 'cors'});
+          if(!resp.ok) return null;
+          const data = await resp.json();
+          if(Array.isArray(data) && data.length){
+            const item = data[0];
+            if(item){
+              return { url: item.headshot_url || null, teamColour: item.team_colour || null };
+            }
+          }
+        } catch(e){ /* ignore */ }
+        return null;
+      }
+
+      // try by driver number
+      if(driverNumber && String(driverNumber) !== '' && String(driverNumber) !== "\\N"){
+        const url = `https://api.openf1.org/v1/drivers?driver_number=${encodeURIComponent(driverNumber)}&session_key=latest`;
+        const res = await fetchFromApi(url);
+        if(res){ if(cacheKey) { persistentCache[cacheKey]=res; try{ localStorage.setItem(persistentCacheKey, JSON.stringify(persistentCache)); }catch(e){} } return res; }
+      }
+
+      // try by full name
+      if(driverName){
+        const url = `https://api.openf1.org/v1/drivers?full_name=${encodeURIComponent(driverName)}&session_key=latest`;
+        const res = await fetchFromApi(url);
+        if(res){ if(cacheKey) { persistentCache[cacheKey]=res; try{ localStorage.setItem(persistentCacheKey, JSON.stringify(persistentCache)); }catch(e){} } return res; }
+      }
+
+      // fallback heuristics for static image URLs
+      const candidates = [];
+      if(driverId) {
+        candidates.push(`https://api.openf1.io/drivers/${driverId}/image`);
+        candidates.push(`https://openf1.io/images/drivers/${driverId}.jpg`);
+        candidates.push(`https://openf1.io/images/drivers/${driverId}.png`);
+        candidates.push(`https://cdn.openf1.io/drivers/${driverId}.jpg`);
+      }
+      if(driverRef){
+        candidates.push(`https://openf1.io/drivers/${driverRef}.jpg`);
+        candidates.push(`https://openf1.io/drivers/${driverRef}.png`);
+        candidates.push(`https://api.openf1.io/drivers/by-ref/${driverRef}/image`);
+      }
+
+      for(const url of candidates){
+        try{
+          const resp = await fetch(url, {mode: 'cors'});
+          if(!resp.ok) continue;
+          const ct = resp.headers.get('content-type') || '';
+          if(!ct.startsWith('image/')) continue;
+          const obj = { url, teamColour: null };
+          if(cacheKey){ persistentCache[cacheKey] = obj; try{ localStorage.setItem(persistentCacheKey, JSON.stringify(persistentCache)); }catch(e){} }
+          return obj;
+        } catch(e){ /* ignore */ }
+      }
+
+      // negative cache
+      if(cacheKey){ persistentCache[cacheKey] = null; try{ localStorage.setItem(persistentCacheKey, JSON.stringify(persistentCache)); }catch(e){} }
+      return null;
+    }
+
+    // helper to unwrap a cached meta (string or object) into a url string
+    function metaToUrl(m){
+      if(!m) return null;
+      if(typeof m === 'string') return m;
+      if(typeof m === 'object' && m.url) return m.url;
+      return null;
+    }
+
     // compute absolute positions and create clipped avatar images
-    plot.forEach((d,i)=>{
+    for(let i=0;i<plot.length;i++){
+      const d = plot[i];
       const cx = margin.left + x(+d[xKey]);
       const cy = margin.top + y(+d[yKey]);
       const rp = Math.max(3, Math.round(r(+d[rKey])));
@@ -225,8 +356,11 @@ async function init(){
       defs.append('clipPath').attr('id', clipId).attr('clipPathUnits', 'userSpaceOnUse')
         .append('circle').attr('cx', cx).attr('cy', cy).attr('r', rp);
 
-      // fallback colored circle (underneath the image)
-      svg.append('circle')
+      // group all bubble elements so we can bring the whole bubble to front on hover
+      const bubbleG = svg.append('g').attr('class', 'bubble').style('pointer-events', 'auto');
+
+      // draw background immediately (will be made transparent later if headshot found)
+      const bgCircle = bubbleG.append('circle')
         .attr('cx', cx).attr('cy', cy).attr('r', rp)
         .attr('fill', color(d[labelKey]))
         .attr('opacity', 0.95);
@@ -242,23 +376,77 @@ async function init(){
       const lum = (c.r * 0.299 + c.g * 0.587 + c.b * 0.114);
       const txtColor = lum < 140 ? '#ffffff' : '#111';
 
-      // generate SVG avatar as data URL
-      const svgAvatar = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns='http://www.w3.org/2000/svg' width='${rp*2}' height='${rp*2}' viewBox='0 0 ${rp*2} ${rp*2}'>` +
+      // generate SVG avatar as data URL (initials fallback)
+      const svgAvatar = `<?xml version="1.0" encoding="UTF-8"?>` +
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${rp*2}' height='${rp*2}' viewBox='0 0 ${rp*2} ${rp*2}'>` +
         `<rect width='100%' height='100%' fill='${color(d[labelKey])}' />` +
         `<text x='50%' y='50%' font-family='Segoe UI, Tahoma, Geneva, Verdana, sans-serif' font-size='${Math.max(10, Math.round(rp*0.9))}' fill='${txtColor}' dominant-baseline='middle' text-anchor='middle'>${initials}</text></svg>`;
       const dataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgAvatar);
 
-      // append image and clip it
-      svg.append('image')
+      // append image and clip it (start with initials)
+      const img = bubbleG.append('image')
         .attr('href', dataUrl)
         .attr('x', cx - rp).attr('y', cy - rp).attr('width', rp*2).attr('height', rp*2)
         .attr('clip-path', `url(#${clipId})`)
         .style('cursor', 'pointer')
-        .on('mouseenter', function(event){ const txt = `${d[labelKey]}\nCount: ${d[xKey]}\nBest: ${d[yKey]} ms`; tooltip.style('display','block').html(txt.replace(/\n/g,'<br/>')); })
+        .on('mouseenter', function(event){
+          // bring this bubble (group) to front so it's not hidden by others
+          try{ bubbleG.raise(); } catch(e){}
+          const txt = `${d[labelKey]}\nCount: ${d[xKey]}\nBest: ${d[yKey]} ms`;
+          tooltip.style('display','block').html(txt.replace(/\n/g,'<br/>'));
+        })
         .on('mousemove', function(event){ tooltip.style('left', (event.clientX+12)+'px').style('top', (event.clientY+12)+'px'); })
         .on('mouseleave', function(){ tooltip.style('display','none'); });
 
-    });
+      // add a subtle border (contour de bulle) above the image
+      bubbleG.append('circle')
+        .attr('cx', cx).attr('cy', cy).attr('r', rp)
+        .attr('fill', 'none')
+        .attr('stroke', '#000')
+        .attr('stroke-width', Math.max(1, Math.round(rp*0.08)));
+
+      // check for local headshot asynchronously; if found replace image and make bg transparent
+      resolveHeadshotLocal(d.id).then(localHead => {
+        if(localHead){
+          try{ img.attr('href', localHead); bgCircle.attr('fill','none'); } catch(e){}
+        }
+      }).catch(()=>{});
+
+      // asynchronously try to fetch real driver photo via OpenF1 and replace if found (non-blocking)
+      (async ()=>{
+        try{
+          const id = d.id || null;
+          // try to find driverRef from drivers dataset (available in outer scope)
+          const drvRow = id ? find(drivers, 'driverId', id) : null;
+          const driverRef = drvRow ? (drvRow.driverRef || drvRow.code || drvRow.url || null) : null;
+          const cacheKey = id || driverRef || name;
+          if(avatarCache[cacheKey]){
+            // previously resolved: either string URL or object {url, teamColour}
+            const cached = avatarCache[cacheKey];
+            const cachedUrl = metaToUrl(cached);
+            if(cachedUrl){ img.attr('href', cachedUrl); try{ if(String(cachedUrl || '').startsWith(dataPath+'headshots/')) bgCircle.attr('fill','none'); } catch(e){} }
+            // if cached team colour and this pilot is the selected one, apply theme
+            const tc = (typeof cached === 'object' && cached && cached.teamColour) ? cached.teamColour : null;
+            if(tc && state.driverId && String(state.driverId)===String(id)) applyTeamColour(tc);
+            return;
+          }
+
+          const meta = await tryFetchOpenF1Image(id, driverRef, drvRow ? drvRow.number : null, name);
+          if(meta && meta.url){
+            avatarCache[cacheKey] = meta;
+            const murl = metaToUrl(meta);
+            if(murl) img.attr('href', murl);
+            try{ if(String(murl).startsWith(dataPath+'headshots/')) bgCircle.attr('fill','none'); } catch(e){}
+            if(meta.teamColour && state.driverId && String(state.driverId)===String(id)) applyTeamColour(meta.teamColour);
+          } else {
+            // mark negative cache to avoid re-trying repeatedly
+            avatarCache[cacheKey] = null;
+          }
+        } catch(e){
+          // ignore errors and keep initials
+        }
+      })();
+    }
 
     // axis labels (kept as before)
     svg.append('text').attr('x', margin.left + w/2).attr('y', height-4).attr('text-anchor','middle').text('Nombre de pitstops (observés)').style('fill', muted);
@@ -268,7 +456,13 @@ async function init(){
   // compute aggregated data according to state.mode and optional circuit filter
   function computeStandings(){
     const yearFilteredRaces = state.year ? races.filter(r=>String(r.year)===String(state.year)).map(r=>r.raceId) : races.map(r=>r.raceId);
-    const filteredResults = results.filter(rs=>yearFilteredRaces.includes(rs.raceId) && (!state.circuitId || String((races.find(rr=>rr.raceId===rs.raceId)||{}).circuitId) === String(state.circuitId)));
+    // base filter by year and circuit
+    let filteredResults = results.filter(rs=>yearFilteredRaces.includes(rs.raceId) && (!state.circuitId || String((races.find(rr=>rr.raceId===rs.raceId)||{}).circuitId) === String(state.circuitId)));
+    // if a driver filter is selected, narrow to that driver
+    if(state.driverId){ filteredResults = filteredResults.filter(r=>String(r.driverId) === String(state.driverId)); }
+    // if a constructor filter is selected, narrow to that constructor
+    if(state.constructorId){ filteredResults = filteredResults.filter(r=>String(r.constructorId) === String(state.constructorId)); }
+
     if(state.mode === 'driver'){
       const resultsByDriver = d3.rollup(filteredResults, v=>v.length, d=>d.driverId);
       return Array.from(resultsByDriver, ([id,count])=>({id, name: getName(find(drivers,'driverId',id),'drivers'), value:count})).sort((a,b)=>b.value-a.value);
@@ -281,7 +475,10 @@ async function init(){
   function computeWinsByCircuit(){
     const yearRaceIds = state.year ? races.filter(r=>String(r.year)===String(state.year)).map(r=>r.raceId) : races.map(r=>r.raceId);
     const raceList = state.circuitId ? races.filter(r=>String(r.circuitId)===String(state.circuitId) && yearRaceIds.includes(r.raceId)).map(r=>r.raceId) : yearRaceIds;
-    const filtered = results.filter(rs=>raceList.includes(rs.raceId));
+    let filtered = results.filter(rs=>raceList.includes(rs.raceId));
+    // apply entity filters
+    if(state.driverId) filtered = filtered.filter(r=>String(r.driverId) === String(state.driverId));
+    if(state.constructorId) filtered = filtered.filter(r=>String(r.constructorId) === String(state.constructorId));
     const wins = filtered.filter(r=>r.position==='1');
 
     if(state.mode === 'driver'){
@@ -311,11 +508,14 @@ async function init(){
       const circuit = circuits.find(c=>String(c.circuitId)===String(cid));
       if(!circuit) return;
       if(state.mode === 'driver'){
+        // if driver filter present, only include circuits matching that driver
+        if(state.driverId && String(rec.driverId) !== String(state.driverId)) return;
         rows.push({name: circuit.name, value: rec.ms, sub: getName(find(drivers,'driverId',rec.driverId),'drivers')});
       } else {
         // constructor mode: find constructor for that driver in that race using results
         const resRow = results.find(r=>String(r.raceId)===String(rec.raceId) && String(r.driverId)===String(rec.driverId));
         const consId = resRow ? resRow.constructorId : null;
+        if(state.constructorId && String(consId) !== String(state.constructorId)) return;
         rows.push({name: circuit.name, value: rec.ms, sub: getName(find(constructors,'constructorId',consId),'constructors')});
       }
     });
@@ -324,25 +524,33 @@ async function init(){
 
   function computePoles(){
     const poles = qualifying.filter(q=>q.position==='1' && (!state.circuitId || String(races.find(r=>String(r.raceId)===String(q.raceId)).circuitId) === String(state.circuitId)) && (!state.year || String(races.find(r=>String(r.raceId)===String(q.raceId)).year) === String(state.year)));
+    // apply driver/constructor filters
+    let filtered = poles;
+    if(state.driverId) filtered = filtered.filter(p=>String(p.driverId) === String(state.driverId));
+    if(state.constructorId) filtered = filtered.filter(p=>String(p.constructorId) === String(state.constructorId) || (results.find(r=>String(r.raceId)===String(p.raceId) && String(r.driverId)===String(p.driverId))||{}).constructorId === String(state.constructorId));
     if(state.mode === 'driver'){
-      const by = d3.rollup(poles, v=>v.length, d=>d.driverId);
+      const by = d3.rollup(filtered, v=>v.length, d=>d.driverId);
       return Array.from(by, ([id,count])=>({id, name:getName(find(drivers,'driverId',id),'drivers'), value:count})).sort((a,b)=>b.value-a.value);
     }
     // constructor mode
-    const by = d3.rollup(poles, v=>v.length, d=> d.constructorId ? d.constructorId : (results.find(r=>String(r.raceId)===String(d.raceId) && String(r.driverId)===String(d.driverId)) || {}).constructorId );
+    const by = d3.rollup(filtered, v=>v.length, d=> d.constructorId ? d.constructorId : (results.find(r=>String(r.raceId)===String(d.raceId) && String(r.driverId)===String(d.driverId)) || {}).constructorId );
     return Array.from(by, ([id,count])=>({id, name:getName(find(constructors,'constructorId',id),'constructors'), value:count})).sort((a,b)=>b.value-a.value);
   }
 
   function computePitStops(){
     const pits = pit_stops.filter(p=>p.milliseconds && (!state.circuitId || String((races.find(r=>String(r.raceId)===String(p.raceId))||{}).circuitId) === String(state.circuitId)) && (!state.year || String((races.find(r=>String(r.raceId)===String(p.raceId))||{}).year) === String(state.year)));
+    // apply driver/constructor filters
+    let filtered = pits;
+    if(state.driverId) filtered = filtered.filter(p=>String(p.driverId) === String(state.driverId));
+    if(state.constructorId) filtered = filtered.filter(p=> String(p.constructorId) === String(state.constructorId) || (results.find(r=>String(r.raceId)===String(p.raceId) && String(r.driverId)===String(p.driverId))||{}).constructorId === String(state.constructorId));
     if(state.mode === 'driver'){
       // compute fastest and count per driver
-      const grouped = d3.group(pits, d=>d.driverId);
+      const grouped = d3.group(filtered, d=>d.driverId);
       const rows = Array.from(grouped, ([id,items])=>({id, name:getName(find(drivers,'driverId',id),'drivers'), value: d3.min(items, d=>+d.milliseconds), count: items.length})).sort((a,b)=>a.value-b.value);
       return rows;
     }
     // constructor mode
-    const grouped = d3.group(pits, d=> d.constructorId ? d.constructorId : (results.find(r=>String(r.raceId)===String(d.raceId) && String(r.driverId)===String(d.driverId))||{}).constructorId);
+    const grouped = d3.group(filtered, d=> d.constructorId ? d.constructorId : (results.find(r=>String(r.raceId)===String(d.raceId) && String(r.driverId)===String(d.driverId))||{}).constructorId);
     const rows = Array.from(grouped, ([id,items])=>({id, name:getName(find(constructors,'constructorId',id),'constructors'), value: d3.min(items, d=>+d.milliseconds), count: items.length})).sort((a,b)=>a.value-b.value);
     return rows;
   }
@@ -417,6 +625,29 @@ async function init(){
   const allOpt = document.createElement('option'); allOpt.value = ''; allOpt.text = 'Tous les circuits'; circuitSelect.appendChild(allOpt);
   circuits.forEach(c=>{ const opt = document.createElement('option'); opt.value = c.circuitId; opt.text = c.name; circuitSelect.appendChild(opt); });
   circuitSelect.onchange = ()=>{ state.circuitId = circuitSelect.value || null; updateAll(); };
+
+  // driver selector
+  const driverSelect = document.getElementById('driverSelect');
+  // populate drivers sorted by name
+  const sortedDrivers = drivers.slice().map(d=>({id:d.driverId, name: ((d.forename||'') + ' ' + (d.surname||'')).trim()})).sort((a,b)=>a.name.localeCompare(b.name));
+  sortedDrivers.forEach(d=>{ const o = document.createElement('option'); o.value = d.id; o.text = d.name; driverSelect.appendChild(o); });
+  driverSelect.onchange = async ()=>{
+    state.driverId = driverSelect.value || null;
+    if(state.driverId) { state.constructorId = null; constructorSelect.value = ''; }
+    // if a driver is selected, try to get team colour and apply it
+    if(state.driverId){
+      const drvRow = find(drivers, 'driverId', state.driverId);
+      const meta = await tryFetchOpenF1Image(state.driverId, drvRow ? drvRow.driverRef : null, drvRow ? drvRow.number : null, drvRow ? ((drvRow.forename||'') + ' ' + (drvRow.surname||'')).trim() : null);
+      if(meta && meta.teamColour){ applyTeamColour(meta.teamColour); }
+    }
+    updateAll();
+  };
+
+  // constructor selector
+  const constructorSelect = document.getElementById('constructorSelect');
+  const sortedCons = constructors.slice().map(c=>({id:c.constructorId, name:c.name || ''})).sort((a,b)=>a.name.localeCompare(b.name));
+  sortedCons.forEach(c=>{ const o = document.createElement('option'); o.value = c.id; o.text = c.name; constructorSelect.appendChild(o); });
+  constructorSelect.onchange = ()=>{ state.constructorId = constructorSelect.value || null; if(state.constructorId){ state.driverId = null; driverSelect.value = ''; } updateAll(); };
 
   // year selector
   const yearSelect = document.getElementById('yearSelect');
