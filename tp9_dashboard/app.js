@@ -192,8 +192,10 @@ async function init(){
     const width = svg.node().clientWidth;
     const height = svg.node().clientHeight;
     const margin = {top:20,right:10,bottom:40,left:60};
-    const w = width - margin.left - margin.right;
-    const h = height - margin.top - margin.bottom;
+    const w = Math.max(50, width - margin.left - margin.right);
+    const h = Math.max(50, height - margin.top - margin.bottom);
+
+    // group used for axes (keeps axis coordinates simple)
     const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
 
     const plot = data.slice(0, top).filter(d=>d[yKey]!=null && d[xKey]!=null);
@@ -201,7 +203,7 @@ async function init(){
 
     const x = d3.scaleLinear().domain([0, d3.max(plot, d=>+d[xKey])]).range([0,w]).nice();
     const y = d3.scaleLinear().domain([d3.max(plot,d=>+d[yKey]), d3.min(plot,d=>+d[yKey])]).range([h,0]).nice();
-    const r = d3.scaleSqrt().domain([d3.min(plot,d=>+d[rKey]), d3.max(plot,d=>+d[rKey])]).range([4,22]);
+    const r = d3.scaleSqrt().domain([d3.min(plot,d=>+d[rKey]), d3.max(plot,d=>+d[rKey])]).range([6,28]);
 
     // axes
     g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x)).selectAll('text').style('fill', muted);
@@ -210,20 +212,55 @@ async function init(){
     // color scale
     const color = d3.scaleOrdinal().domain(plot.map(d=>d[labelKey])).range(palette);
 
-    const nodes = g.selectAll('circle').data(plot).join('circle')
-      .attr('cx', d=>x(+d[xKey]))
-      .attr('cy', d=>y(+d[yKey]))
-      .attr('r', d=>r(+d[rKey]))
-      .attr('fill', d=>color(d[labelKey]))
-      .attr('opacity',0.85)
-      .on('mouseenter', function(event,d){
-        const txt = `${d[labelKey]}\nCount: ${d[xKey]}\nBest: ${d[yKey]} ms`;
-        tooltip.style('display','block').html(txt.replace(/\n/g,'<br/>'));
-      })
-      .on('mousemove', function(event){ tooltip.style('left', (event.clientX+12)+'px').style('top', (event.clientY+12)+'px'); })
-      .on('mouseleave', function(){ tooltip.style('display','none'); });
+    // defs for clipPaths
+    const defs = svg.append('defs');
 
-    // axis labels
+    // compute absolute positions and create clipped avatar images
+    plot.forEach((d,i)=>{
+      const cx = margin.left + x(+d[xKey]);
+      const cy = margin.top + y(+d[yKey]);
+      const rp = Math.max(3, Math.round(r(+d[rKey])));
+      const clipId = `avatar-clip-${i}`;
+      // create clipPath in userSpaceOnUse so we can use absolute coords
+      defs.append('clipPath').attr('id', clipId).attr('clipPathUnits', 'userSpaceOnUse')
+        .append('circle').attr('cx', cx).attr('cy', cy).attr('r', rp);
+
+      // fallback colored circle (underneath the image)
+      svg.append('circle')
+        .attr('cx', cx).attr('cy', cy).attr('r', rp)
+        .attr('fill', color(d[labelKey]))
+        .attr('opacity', 0.95);
+
+      // prepare initials for generated avatar
+      const name = String(d[labelKey] || '');
+      const parts = name.split(/\s+/).filter(Boolean);
+      let initials = parts.length ? parts.map(p=>p[0]).slice(0,2).join('') : name.slice(0,2);
+      initials = initials.toUpperCase();
+
+      // contrasting text color for avatar label
+      const c = d3.color(color(d[labelKey])) || d3.color('#000');
+      const lum = (c.r * 0.299 + c.g * 0.587 + c.b * 0.114);
+      const txtColor = lum < 140 ? '#ffffff' : '#111';
+
+      // generate SVG avatar as data URL
+      const svgAvatar = `<?xml version="1.0" encoding="UTF-8"?><svg xmlns='http://www.w3.org/2000/svg' width='${rp*2}' height='${rp*2}' viewBox='0 0 ${rp*2} ${rp*2}'>` +
+        `<rect width='100%' height='100%' fill='${color(d[labelKey])}' />` +
+        `<text x='50%' y='50%' font-family='Segoe UI, Tahoma, Geneva, Verdana, sans-serif' font-size='${Math.max(10, Math.round(rp*0.9))}' fill='${txtColor}' dominant-baseline='middle' text-anchor='middle'>${initials}</text></svg>`;
+      const dataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgAvatar);
+
+      // append image and clip it
+      svg.append('image')
+        .attr('href', dataUrl)
+        .attr('x', cx - rp).attr('y', cy - rp).attr('width', rp*2).attr('height', rp*2)
+        .attr('clip-path', `url(#${clipId})`)
+        .style('cursor', 'pointer')
+        .on('mouseenter', function(event){ const txt = `${d[labelKey]}\nCount: ${d[xKey]}\nBest: ${d[yKey]} ms`; tooltip.style('display','block').html(txt.replace(/\n/g,'<br/>')); })
+        .on('mousemove', function(event){ tooltip.style('left', (event.clientX+12)+'px').style('top', (event.clientY+12)+'px'); })
+        .on('mouseleave', function(){ tooltip.style('display','none'); });
+
+    });
+
+    // axis labels (kept as before)
     svg.append('text').attr('x', margin.left + w/2).attr('y', height-4).attr('text-anchor','middle').text('Nombre de pitstops (observés)').style('fill', muted);
     svg.append('text').attr('transform', 'rotate(-90)').attr('x', - (margin.top + h/2)).attr('y', 12).attr('text-anchor','middle').text('Meilleur pit (ms)').style('fill', muted);
   }
