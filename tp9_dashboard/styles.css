@@ -44,6 +44,8 @@ header p { margin: 0; opacity: 0.85; font-size: 0.95rem; }
   max-width: 1650px; /* increased by ~25% additional */
   margin: 18px auto;
 }
+
+/* Header controls removed (dark mode UI disabled) */
 .global-filters .controls { display: flex; gap: 8px; align-items: center; }
 .global-filters select { padding: 8px 10px; border-radius: 6px; border: 1px solid #ddd; background: white; }
 
@@ -189,3 +191,59 @@ button.active{background:#2b8cc4;color:white;border-color:#19607f}
 .card .close-btn:hover{background:#e6f0fb}
 /* ensure svg fills expanded chart area */
 .card.expanded svg{width:100%;height:100%}
+
+/* Start lights overlay (Feux de départ) */
+.start-overlay{
+  position: fixed;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(5,5,10,0.92); /* more opaque for clearer focus during loading */
+  z-index: 10000;
+  transition: opacity 360ms ease, visibility 360ms ease;
+}
+.start-overlay.hidden{ opacity: 0; visibility: hidden; pointer-events: none; }
+.start-box{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+}
+.start-lights{ display:flex; gap:12px; align-items:center; justify-content:center; }
+.start-lights .light{
+  width: 34px; height:34px; border-radius:50%; background:#444; box-shadow: inset 0 -4px 8px rgba(0,0,0,0.4);
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transform: scale(0.98);
+}
+.start-lights .light.on{
+  background: var(--accent);
+  box-shadow: 0 0 18px rgba(225,16,0,0.95), inset 0 -4px 8px rgba(0,0,0,0.2);
+  transform: scale(1.06);
+}
+.go-text{
+  color: white; font-weight:800; font-size:1.6rem; letter-spacing:0.06em; opacity:0; transform: translateY(6px); transition: all 260ms ease;
+}
+.go-text.visible{ opacity:1; transform: translateY(0); }
+.go-text.go-green{ color: #27ae60; text-shadow: 0 6px 18px rgba(39,174,96,0.28); }
+.go-text.flash{ transform: scale(1.18); text-shadow: 0 10px 30px rgba(39,174,96,0.45); transition: transform 180ms ease, text-shadow 180ms ease; }
+.loading-sub{ color: #ddd; font-size:0.95rem; opacity:0.95 }
+
+/* F1 tyre spinner (small, 24-32px) */
+.spinner-wrap{ position: absolute; right: 18px; top: 18px; width: 32px; height: 32px; display: none; align-items:center; justify-content:center; z-index:11000 }
+.f1-spinner{ width: var(--f1-spinner-size,28px); height: var(--f1-spinner-size,28px); display:block }
+
+/* rotation animation */
+@keyframes f1-rotate { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+.f1-spinner #spinnerGroup { transform-origin: 32px 32px; }
+.f1-spinner.rotating #spinnerGroup { animation: f1-rotate var(--f1-spinner-duration,0.95s) linear infinite }
+
+/* make sure small sizes remain crisp */
+.f1-spinner { shape-rendering: geometricPrecision; }
+
+/* hidden helper when not loading */
+.spinner-hidden{ display: none !important }
+.spinner-visible{ display:flex !important }
+
+/* smaller on mobile */
+@media(max-width:480px){ .start-lights .light{ width:26px; height:26px } .go-text{ font-size:1.2rem } }

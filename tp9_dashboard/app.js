@@ -4,10 +4,116 @@ const dataPath = "../data/"; // use forward slashes for browser fetch URLs
 
 async function loadCsv(name){
   const res = await fetch(dataPath + name);
-  return d3.csvParse(await res.text());
+  const txt = await res.text();
+  // schedule parsing on the next macrotask so the browser can paint the overlay
+  return await new Promise((resolve)=> setTimeout(()=> resolve(d3.csvParse(txt)), 0));
 }
 
 async function init(){
+  // start lights overlay helper: shows animated 5 red lights while loading
+  const startLights = (function(){
+    let overlay = null;
+    let lights = [];
+    let goText = null;
+    let cycleTimer = null;
+    let loadedFlag = false;
+
+    // Timings (user requested ranges): choose values inside ranges
+    const lightInterval = 1000; // ms between each light (set to 1s as requested)
+    const allOnDuration = 400; // ms all lights stay on before GO (0.2 - 0.6s)
+    const goFlash = 200; // ms GO flash duration (0.15 - 0.3s)
+
+    function create(){
+      overlay = document.createElement('div'); overlay.className = 'start-overlay';
+      const box = document.createElement('div'); box.className = 'start-box';
+      const lightsWrap = document.createElement('div'); lightsWrap.className = 'start-lights';
+      for(let i=0;i<5;i++){ const l = document.createElement('div'); l.className='light'; lightsWrap.appendChild(l); lights.push(l); }
+      goText = document.createElement('div'); goText.className = 'go-text'; goText.textContent = 'GO!';
+      const sub = document.createElement('div'); sub.className = 'loading-sub'; sub.textContent = 'Chargement en cours — patience...';
+      box.appendChild(lightsWrap); box.appendChild(goText); box.appendChild(sub);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+    }
+
+    function clearCycle(){ if(cycleTimer){ clearTimeout(cycleTimer); cycleTimer = null; } }
+
+    function playCycle(){
+      if(!overlay) return;
+      let i = 0;
+
+      function lightStep(){
+        // light up cumulative up to index i-1
+        for(let k=0;k<5;k++) lights[k].classList.toggle('on', k < i);
+        if(i < 5){
+          i++;
+          cycleTimer = setTimeout(lightStep, lightInterval);
+          return;
+        }
+
+        // all lights are on now
+        if(loadedFlag){
+          // short pause then GO sequence
+          cycleTimer = setTimeout(doGo, allOnDuration);
+          return;
+        }
+
+        // keep lights on for a moment, then extinguish and restart cycle
+        cycleTimer = setTimeout(()=>{
+          for(const l of lights) l.classList.remove('on');
+          // small pause before restarting
+          cycleTimer = setTimeout(()=>{ i = 0; lightStep(); }, 300);
+        }, allOnDuration);
+      }
+
+      // start sequence
+      // ensure lights cleared
+      for(const l of lights) l.classList.remove('on');
+      lightStep();
+    }
+
+    function doGo(){
+      clearCycle();
+      // extinguish lights immediately
+      for(const l of lights) l.classList.remove('on');
+      // show GO in green with a short flash effect
+      if(goText){
+        goText.classList.add('go-green');
+        // make visible then flash (scale) briefly
+        goText.classList.add('visible');
+        // apply flash effect
+        goText.classList.add('flash');
+        // after the flash duration, remove flash and hide overlay
+        setTimeout(()=>{
+          goText.classList.remove('flash');
+          // small delay so user sees GO, then hide overlay
+          setTimeout(()=>{
+            if(overlay){ overlay.classList.add('hidden'); }
+            setTimeout(()=>{ try{ overlay && overlay.remove(); } catch(e){} }, 420);
+          }, 80);
+        }, goFlash);
+      } else {
+        if(overlay){ overlay.classList.add('hidden'); setTimeout(()=>{ try{ overlay && overlay.remove(); }catch(e){} }, 420); }
+      }
+    }
+
+    function start(){ if(!overlay) create(); overlay.classList.remove('hidden'); if(goText){ goText.classList.remove('visible','go-green','flash'); } loadedFlag = false; playCycle(); }
+    function markLoaded(){ loadedFlag = true; }
+    function stopNow(){ loadedFlag = true; }
+
+    return { start, markLoaded, stopNow };
+  })();
+
+  // start overlay animation before beginning heavy fetches
+  try{ startLights.start(); } catch(e){ /* ignore */ }
+
+  // position spinner under header and show it while CSVs load
+  try{ if(typeof positionSpinner === 'function') positionSpinner(); } catch(e){}
+  try{ window.addEventListener('resize', ()=>{ try{ positionSpinner(); }catch(e){} }); } catch(e){}
+  try{ showSpinner(); } catch(e){}
+
+  // allow the browser to paint the overlay before we begin the potentially busy fetch/parse work
+  // double rAF gives the browser a chance to layout & paint the newly-inserted DOM
+  try{ await new Promise(res=> requestAnimationFrame(()=> requestAnimationFrame(res))); } catch(e){ /* fallback no-op */ }
   const [drivers, constructors, races, results, circuits, qualifying, pit_stops, lap_times] = await Promise.all([
     loadCsv('drivers.csv'),
     loadCsv('constructors.csv'),
@@ -18,6 +124,9 @@ async function init(){
     loadCsv('pit_stops.csv'),
     loadCsv('lap_times.csv')
   ]);
+
+  // signal that data is ready so startLights will play final GO and hide
+  try{ startLights.markLoaded(); } catch(e){ /* ignore */ }
 
   // Helpers
   const find = (arr, key, id) => arr && arr.find(x => String(x[key]) === String(id));
@@ -86,8 +195,28 @@ async function init(){
     const x = d3.scaleLinear().range([0,w]).domain([0, maxVisible * 1.05]);
     const y = d3.scaleBand().range([0,h]).domain(data.slice(0,top).map(d=>d[labelKey])).padding(0.1);
 
+    // helper: generate shades from base color towards white (used when a team colour is active)
+    function generateShades(base, n){
+      try{
+        const interp = d3.interpolateRgb(base, '#ffffff');
+        const maxT = 0.66; // how far to go towards target (0..1)
+        if(n <= 1) return [base];
+        return Array.from({length:n}, (_,i)=> interp((i/(n-1)) * maxT));
+      } catch(e){ return Array.from({length:n}, (_,i)=> palette[i % palette.length]); }
+    }
+
     // color scale for bars based on labels
-    const color = d3.scaleOrdinal().domain(data.map(d=>d[labelKey])).range(palette);
+    let color;
+    // use team colour shades when a specific driver or constructor is selected
+    if(state && (state.driverId || state.constructorId)){
+      const computed = window.getComputedStyle(document.documentElement);
+      const base = (computed.getPropertyValue('--accent') || palette[0]).trim();
+      const n = Math.max(1, visible.length);
+      const shades = generateShades(base, n);
+      color = d3.scaleOrdinal().domain(visible.map(d=>d[labelKey])).range(shades);
+    } else {
+      color = d3.scaleOrdinal().domain(data.map(d=>d[labelKey])).range(palette);
+    }
 
     const bars = g.append('g').selectAll('rect').data(data.slice(0,top)).join('rect')
       .attr('y', d=>y(d[labelKey]))
@@ -157,8 +286,21 @@ async function init(){
 
     const pie = d3.pie().value(d=>d[valueKey]).sort(null);
     const arcs = pie(topData);
-    // color scale using site palette
-    const color = d3.scaleOrdinal().domain(topData.map(d=>d[labelKey])).range(palette);
+    // color scale using site palette or team shades when a team is selected
+    let color;
+    if(state && (state.driverId || state.constructorId)){
+      try{
+        const computed = window.getComputedStyle(document.documentElement);
+        const base = (computed.getPropertyValue('--accent') || palette[0]).trim();
+        const n = Math.max(1, topData.length);
+        const interp = d3.interpolateRgb(base, '#ffffff');
+        const maxT = 0.66;
+        const shades = Array.from({length:n}, (_,i)=> interp((i/(n-1||1)) * maxT));
+        color = d3.scaleOrdinal().domain(topData.map(d=>d[labelKey])).range(shades);
+      } catch(e){ color = d3.scaleOrdinal().domain(topData.map(d=>d[labelKey])).range(palette); }
+    } else {
+      color = d3.scaleOrdinal().domain(topData.map(d=>d[labelKey])).range(palette);
+    }
 
     const arc = d3.arc().innerRadius(0).outerRadius(radius);
 
@@ -210,7 +352,19 @@ async function init(){
     g.append('g').call(d3.axisLeft(y)).selectAll('text').style('fill', muted);
 
     // color scale
-    const color = d3.scaleOrdinal().domain(plot.map(d=>d[labelKey])).range(palette);
+    // color scale: when a team colour is active, use shades of the team colour
+    let color;
+    if(state && (state.driverId || state.constructorId)){
+      const computed = window.getComputedStyle(document.documentElement);
+      const base = (computed.getPropertyValue('--accent') || palette[0]).trim();
+      const n = Math.max(1, plot.length);
+      const interp = d3.interpolateRgb(base, '#ffffff');
+      const maxT = 0.66;
+      const shades = Array.from({length:n}, (_,i)=> interp((i/(n-1||1)) * maxT));
+      color = d3.scaleOrdinal().domain(plot.map(d=>d[labelKey])).range(shades);
+    } else {
+      color = d3.scaleOrdinal().domain(plot.map(d=>d[labelKey])).range(palette);
+    }
 
     // defs for clipPaths
     const defs = svg.append('defs');
@@ -232,6 +386,8 @@ async function init(){
       try{ document.documentElement.style.setProperty('--accent', hex); } catch(e){}
       // update in-memory palette first color so charts pick it up on next draw
       try{ palette[0] = hex; } catch(e){}
+      // trigger a re-render so charts pick up the new colour immediately
+      try{ setTimeout(()=>{ if(typeof updateAll === 'function') updateAll(); }, 0); } catch(e){}
     }
 
     // function to request local headshot server to fetch and save headshot
@@ -631,16 +787,23 @@ async function init(){
   // populate drivers sorted by name
   const sortedDrivers = drivers.slice().map(d=>({id:d.driverId, name: ((d.forename||'') + ' ' + (d.surname||'')).trim()})).sort((a,b)=>a.name.localeCompare(b.name));
   sortedDrivers.forEach(d=>{ const o = document.createElement('option'); o.value = d.id; o.text = d.name; driverSelect.appendChild(o); });
-  driverSelect.onchange = async ()=>{
+  driverSelect.onchange = ()=>{
     state.driverId = driverSelect.value || null;
     if(state.driverId) { state.constructorId = null; constructorSelect.value = ''; }
-    // if a driver is selected, try to get team colour and apply it
-    if(state.driverId){
-      const drvRow = find(drivers, 'driverId', state.driverId);
-      const meta = await tryFetchOpenF1Image(state.driverId, drvRow ? drvRow.driverRef : null, drvRow ? drvRow.number : null, drvRow ? ((drvRow.forename||'') + ' ' + (drvRow.surname||'')).trim() : null);
-      if(meta && meta.teamColour){ applyTeamColour(meta.teamColour); }
-    }
+
+    // Update charts immediately so the UI responds even if metadata fetch fails or is slow
     updateAll();
+
+    // Try to fetch driver metadata asynchronously (non-blocking). Guard against undefined helper.
+    (async ()=>{
+      try{
+        const drvRow = state.driverId ? find(drivers, 'driverId', state.driverId) : null;
+        if(typeof tryFetchOpenF1Image === 'function'){
+          const meta = await tryFetchOpenF1Image(state.driverId, drvRow ? drvRow.driverRef : null, drvRow ? drvRow.number : null, drvRow ? ((drvRow.forename||'') + ' ' + (drvRow.surname||'')).trim() : null);
+          if(meta && meta.teamColour){ applyTeamColour(meta.teamColour); }
+        }
+      } catch(e){ console.warn('driver metadata fetch failed', e); }
+    })();
   };
 
   // constructor selector
@@ -656,6 +819,34 @@ async function init(){
   years.forEach(y=>{ const o=document.createElement('option'); o.value=y; o.text=y; yearSelect.appendChild(o); });
   yearSelect.onchange = ()=>{ state.year = yearSelect.value || null; updateAll(); };
 
+  // reset filters button: restore UI controls and state to defaults
+  function resetFilters(){
+    try{
+      // reset selects
+      if(circuitSelect) circuitSelect.value = '';
+      if(yearSelect) yearSelect.value = '';
+      if(driverSelect) driverSelect.value = '';
+      if(constructorSelect) constructorSelect.value = '';
+
+      // reset state
+      state.mode = 'driver';
+      state.circuitId = null;
+      state.year = null;
+      state.driverId = null;
+      state.constructorId = null;
+
+      // remove any programmatic accent override so CSS default applies
+      try{ document.documentElement.style.removeProperty('--accent'); } catch(e){}
+
+      // update UI and charts
+      setMode('driver');
+      updateAll();
+    } catch(e){ console.error('resetFilters error', e); }
+  }
+
+  const btnReset = document.getElementById('btnResetFilters');
+  if(btnReset) btnReset.onclick = resetFilters;
+
   // add tooltip for info icons
   const tooltip = d3.select('body').append('div').attr('class','tooltip');
   d3.selectAll('.info').on('mouseenter', function(event){
@@ -669,9 +860,52 @@ async function init(){
 
   // initial render
   // set default active button style
+  // wait a small tick to allow overlay GO animation to finish if running
   setMode('driver');
   updateAll();
   adjustGrid();
+  try{ hideSpinner(); } catch(e){}
+
+  // small helpers to show/hide the F1 tyre spinner added to the header
+  function showSpinner(){
+    try{
+      const wrap = document.getElementById('spinnerWrap');
+      const svg = document.getElementById('f1Spinner');
+      if(!wrap || !svg) return;
+      wrap.classList.remove('spinner-hidden'); wrap.classList.add('spinner-visible');
+      svg.classList.add('rotating');
+      wrap.setAttribute('aria-hidden','false');
+    } catch(e){ }
+  }
+  function hideSpinner(){
+    try{
+      const wrap = document.getElementById('spinnerWrap');
+      const svg = document.getElementById('f1Spinner');
+      if(!wrap || !svg) return;
+      svg.classList.remove('rotating');
+      wrap.classList.remove('spinner-visible'); wrap.classList.add('spinner-hidden');
+      wrap.setAttribute('aria-hidden','true');
+    } catch(e){ }
+  }
+
+  // position the spinner directly under the header band (top-right)
+  function positionSpinner(){
+    try{
+      const wrap = document.getElementById('spinnerWrap');
+      const header = document.querySelector('header');
+      if(!wrap || !header) return;
+      const rect = header.getBoundingClientRect();
+      // place 6px below header bottom, account for scroll
+      const top = rect.bottom + 6 + window.scrollY;
+      wrap.style.position = 'absolute';
+      wrap.style.top = top + 'px';
+      wrap.style.right = '18px';
+    } catch(e){ }
+  }
+
+  // expose to global for simple calls from console or other modules
+  window.showSpinner = showSpinner;
+  window.hideSpinner = hideSpinner;
 
   // helper to expand a card
   function makeCardExpandable(){

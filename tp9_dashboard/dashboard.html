@@ -13,6 +13,35 @@
     <p>Ouvrir ce fichier dans un navigateur (ou via un serveur local) pour visualiser les statistiques.</p>
   </header>
 
+  <!-- spinner positioned under the header (top-right) -->
+  <div id="spinnerWrap" class="spinner-wrap spinner-hidden" aria-hidden="true" title="Chargement des données">
+    <!-- Inline SVG spinner: F1 tyre (small, minimal) -->
+    <svg id="f1Spinner" class="f1-spinner" viewBox="0 0 64 64" width="28" height="28" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="outerBlur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="0.6" result="b" />
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- outer tyre ring (black) with thin red stroke as F1 code -->
+      <g id="spinnerGroup" transform="translate(32,32)">
+        <circle r="28" fill="#000" stroke="#c20b0b" stroke-width="2.6" filter="" />
+        <!-- subtle outer blur for speed (kept small) -->
+        <circle r="28" fill="none" stroke="#000" stroke-width="0.4" opacity="0.18" filter="url(#outerBlur)" />
+
+        <!-- rim (lighter center) -->
+        <circle r="12" fill="#e9eef3" stroke="#d6dbe0" stroke-width="0.8" />
+
+        <!-- 3 spokes (rects rotated) -->
+        <g fill="#cfd6dc" stroke="none">
+          <rect x="-1.2" y="-12" width="2.4" height="24" rx="0.6" transform="rotate(0)" />
+          <rect x="-1.2" y="-12" width="2.4" height="24" rx="0.6" transform="rotate(120)" />
+          <rect x="-1.2" y="-12" width="2.4" height="24" rx="0.6" transform="rotate(240)" />
+        </g>
+      </g>
+    </svg>
+  </div>
+
   <!-- global filters moved here (sous le titre) -->
   <div class="global-filters">
     <div class="controls">
@@ -53,6 +82,9 @@
           <circle cx="12" cy="17" r="1" fill="#0b2035" />
         </svg>
       </span>
+    </div>
+    <div class="controls">
+      <button id="btnResetFilters" title="Réinitialiser tous les filtres">Réinitialiser les filtres</button>
     </div>
   </div>
 
