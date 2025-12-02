@@ -44,36 +44,100 @@ async function init(){
   function drawBarChart(svgSelector, data, {labelKey='name', valueKey='value', top=10} = {}){
     const svg = d3.select(svgSelector);
     svg.selectAll('*').remove();
+    svg.attr('overflow','visible');
     const width = svg.node().clientWidth;
     const height = svg.node().clientHeight;
-    const margin = {top:20,right:10,bottom:40,left:140};
+
+    // use only the visible slice (top N) for sizing and scales so axis adapts to displayed values
+    const visible = (data && data.slice(0, top)) || [];
+
+    // compute a dynamic right margin to avoid clipping (we keep some padding but labels will be inside bars)
+    const maxVal = d3.max(visible, d => +d[valueKey]) || 0;
+    const approxCharWidth = 9; // approximate pixels per digit/char for label sizing
+    const valLabelWidth = String(maxVal).length * approxCharWidth + 16; // padding around number
+    // compute left margin based on actual rendered label widths to avoid left overflow
+    let maxLabelPx = 0;
+    try{
+      const meas = svg.append('g').attr('class','_label-measure').attr('visibility','hidden');
+      visible.forEach(v => {
+        const txt = String(v[labelKey] || '');
+        const t = meas.append('text').style('font-size','12px').style('font-family', 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif').text(txt);
+        const wTxt = t.node().getComputedTextLength();
+        if(wTxt > maxLabelPx) maxLabelPx = wTxt;
+        t.remove();
+      });
+      meas.remove();
+    } catch(e){
+      // fallback to character estimate on any error
+      const maxLabelLen = d3.max(visible, d => String(d[labelKey] || '').length) || 0;
+      maxLabelPx = maxLabelLen * approxCharWidth;
+    }
+    // keep left margin reasonable: at least 70px for label room, but not more than 40% of svg width
+    const computedLeftPx = Math.ceil(maxLabelPx) + 24;
+    const leftMargin = Math.min(Math.max(70, computedLeftPx), Math.floor(width * 0.4));
+    const margin = {top:20,right: Math.max(12, valLabelWidth),bottom:40,left:leftMargin};
+
     const w = Math.max(50, width - margin.left - margin.right);
     const h = Math.max(50, height - margin.top - margin.bottom);
 
     const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
-    const x = d3.scaleLinear().range([0,w]).domain([0, d3.max(data, d=>d[valueKey]) || 1]);
+    // domain based on visible values and add small padding (5%) so the largest bar doesn't touch the axis end
+    const maxVisible = Math.max(1, d3.max(visible, d => +d[valueKey]) || 1);
+    const x = d3.scaleLinear().range([0,w]).domain([0, maxVisible * 1.05]);
     const y = d3.scaleBand().range([0,h]).domain(data.slice(0,top).map(d=>d[labelKey])).padding(0.1);
 
     // color scale for bars based on labels
     const color = d3.scaleOrdinal().domain(data.map(d=>d[labelKey])).range(palette);
 
-    g.append('g').selectAll('rect').data(data.slice(0,top)).join('rect')
+    const bars = g.append('g').selectAll('rect').data(data.slice(0,top)).join('rect')
       .attr('y', d=>y(d[labelKey]))
       .attr('height', y.bandwidth())
       .attr('x',0)
       .attr('width', d=>x(d[valueKey]))
       .attr('fill', d=>color(d[labelKey]));
 
-    g.append('g').call(d3.axisLeft(y)).selectAll('text').style('font-size','12px').style('fill', dark);
+    // render y axis
+    const yAxisG = g.append('g').call(d3.axisLeft(y));
+    yAxisG.selectAll('text').style('font-size','12px').style('fill', dark).each(function(d){
+      const node = this;
+      const full = String(d || '');
+      // if the rendered text is wider than available left margin, truncate with ellipsis
+      const maxAllowed = Math.max(20, leftMargin - 24); // safe area inside left margin
+      if(node.getComputedTextLength() > maxAllowed){
+        let txt = full;
+        // progressively truncate
+        while(node.getComputedTextLength() > maxAllowed && txt.length>0){
+          txt = txt.slice(0,-1);
+          node.textContent = txt + '…';
+        }
+        // set native tooltip with full label
+        node.setAttribute('title', full);
+      }
+    });
     g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x).ticks(5)).selectAll('text').style('fill', muted);
 
-    // labels
-    g.selectAll('.label').data(data.slice(0,top)).join('text')
-      .attr('x', d=>x(d[valueKey]) + 6)
-      .attr('y', d=>y(d[labelKey]) + y.bandwidth()/2 + 4)
+    // labels: always placed inside the bar, right-aligned
+    const labels = g.selectAll('.label').data(data.slice(0,top)).join('text')
+      .attr('y', d=> y(d[labelKey]) + y.bandwidth()/2 + 4)
       .text(d=>d[valueKey])
       .style('font-size','11px')
-      .style('fill', muted);
+      .attr('text-anchor','end');
+
+    // set x and contrasting color based on bar fill
+    labels.each(function(d){
+      const sel = d3.select(this);
+      const barWidth = x(d[valueKey]);
+      // position 6px from the right edge of the bar
+      const xPos = Math.max(6, barWidth - 6);
+      sel.attr('x', xPos);
+
+      // determine contrasting text color from bar fill
+      const barFill = color(d[labelKey]);
+      const c = d3.color(barFill) || d3.color('#000');
+      const lum = (c.r * 0.299 + c.g * 0.587 + c.b * 0.114);
+      const textColor = lum < 140 ? '#ffffff' : dark;
+      sel.style('fill', textColor);
+    });
   }
 
   // pie chart drawer

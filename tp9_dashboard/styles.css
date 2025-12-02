@@ -41,7 +41,7 @@ header p { margin: 0; opacity: 0.85; font-size: 0.95rem; }
   gap: 12px;
   align-items: center;
   padding: 14px 18px;
-  max-width: 1200px;
+  max-width: 1650px; /* increased by ~25% additional */
   margin: 18px auto;
 }
 .global-filters .controls { display: flex; gap: 8px; align-items: center; }
@@ -71,9 +71,10 @@ header p { margin: 0; opacity: 0.85; font-size: 0.95rem; }
 /* Dashboard grid and cards */
 .dashboard-grid { 
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  /* further increase by ~25% */
+  grid-template-columns: repeat(auto-fit, minmax(412px, 1fr));
   gap: 18px;
-  max-width: 1200px;
+  max-width: 1650px; /* increased by ~25% additional */
   margin: 12px auto 60px auto;
   padding: 0 18px;
 }
@@ -154,7 +155,7 @@ tr:hover { background-color: #fff5f5; }
 body{margin:0;padding:1rem;background:#f5f7fb;color:#0b2035}
 header{margin-bottom:1rem}
 h1{margin:.2rem 0}
-main.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem}
+main.dashboard-grid{display:grid;/* increased further by ~25% */grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:1rem}
 .card{background:white;border-radius:8px;padding:1rem;box-shadow:0 2px 6px rgba(11,32,53,0.08)}
 .controls{margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap}
 button{margin-right:.5rem;padding:.4rem .8rem;border-radius:6px;border:1px solid #cbd6e0;background:#eef6ff;cursor:pointer}

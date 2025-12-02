@@ -7,3 +7,7 @@ dataset : https://www.kaggle.com/datasets/rohanrao/formula-1-world-championship-
 - record de chaque piste
 - stat pol position (qualification)
 - les pitstop les plus rapide par pilote et par écuries
+
+pour ouvrir le dashboard :
+python -m http.server 8000 dans le repo
+http://localhost:8000/tp9_dashboard/dashboard.html
