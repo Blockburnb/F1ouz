@@ -10,101 +10,73 @@ async function loadCsv(name){
 }
 
 async function init(){
-  // start lights overlay helper: shows animated 5 red lights while loading
+  // --- DÉBUT BLOC À COLLER ---
   const startLights = (function(){
-    let overlay = null;
-    let lights = [];
-    let goText = null;
-    let cycleTimer = null;
-    let loadedFlag = false;
-
-    // Timings (user requested ranges): choose values inside ranges
-    const lightInterval = 1000; // ms between each light (set to 1s as requested)
-    const allOnDuration = 400; // ms all lights stay on before GO (0.2 - 0.6s)
-    const goFlash = 200; // ms GO flash duration (0.15 - 0.3s)
-
+    let overlay = null, lights = [], goText = null, cycleTimer = null, loadedFlag = false;
+    
     function create(){
+      // Création HTML dynamique
       overlay = document.createElement('div'); overlay.className = 'start-overlay';
       const box = document.createElement('div'); box.className = 'start-box';
       const lightsWrap = document.createElement('div'); lightsWrap.className = 'start-lights';
-      for(let i=0;i<5;i++){ const l = document.createElement('div'); l.className='light'; lightsWrap.appendChild(l); lights.push(l); }
+      
+      for(let i=0;i<5;i++){ 
+          const l = document.createElement('div'); l.className='light'; 
+          lightsWrap.appendChild(l); lights.push(l); 
+      }
+      
       goText = document.createElement('div'); goText.className = 'go-text'; goText.textContent = 'GO!';
-      const sub = document.createElement('div'); sub.className = 'loading-sub'; sub.textContent = 'Chargement en cours — patience...';
+      const sub = document.createElement('div'); sub.className = 'loading-sub'; sub.textContent = 'Chargement des données...';
+      
       box.appendChild(lightsWrap); box.appendChild(goText); box.appendChild(sub);
       overlay.appendChild(box);
       document.body.appendChild(overlay);
     }
 
-    function clearCycle(){ if(cycleTimer){ clearTimeout(cycleTimer); cycleTimer = null; } }
-
-    function playCycle(){
-      if(!overlay) return;
-      let i = 0;
-
-      function lightStep(){
-        // light up cumulative up to index i-1
-        for(let k=0;k<5;k++) lights[k].classList.toggle('on', k < i);
+    function lightStep(i = 0){
         if(i < 5){
-          i++;
-          cycleTimer = setTimeout(lightStep, lightInterval);
-          return;
+            // Allume une lumière rouge
+            lights[i].classList.add('on');
+            cycleTimer = setTimeout(() => lightStep(i+1), 1000); // Délai 1 seconde
+        } else {
+            // Toutes allumées, on attend les données
+            waitForData();
         }
+    }
 
-        // all lights are on now
+    function waitForData(){
         if(loadedFlag){
-          // short pause then GO sequence
-          cycleTimer = setTimeout(doGo, allOnDuration);
-          return;
+            // Si les données sont là, on lance le vert
+            setTimeout(doGo, 500); 
+        } else {
+            // Sinon on continue d'attendre
+            cycleTimer = setTimeout(waitForData, 200);
         }
-
-        // keep lights on for a moment, then extinguish and restart cycle
-        cycleTimer = setTimeout(()=>{
-          for(const l of lights) l.classList.remove('on');
-          // small pause before restarting
-          cycleTimer = setTimeout(()=>{ i = 0; lightStep(); }, 300);
-        }, allOnDuration);
-      }
-
-      // start sequence
-      // ensure lights cleared
-      for(const l of lights) l.classList.remove('on');
-      lightStep();
     }
 
     function doGo(){
-      clearCycle();
-      // extinguish lights immediately
-      for(const l of lights) l.classList.remove('on');
-      // show GO in green with a short flash effect
+      // Extinction des feux rouges
+      lights.forEach(l => l.classList.remove('on'));
       if(goText){
-        goText.classList.add('go-green');
-        // make visible then flash (scale) briefly
-        goText.classList.add('visible');
-        // apply flash effect
-        goText.classList.add('flash');
-        // after the flash duration, remove flash and hide overlay
+        // Affichage du GO vert
+        goText.classList.add('visible', 'go-green', 'flash');
+        // On enlève l'écran après un court délai
         setTimeout(()=>{
-          goText.classList.remove('flash');
-          // small delay so user sees GO, then hide overlay
-          setTimeout(()=>{
-            if(overlay){ overlay.classList.add('hidden'); }
-            setTimeout(()=>{ try{ overlay && overlay.remove(); } catch(e){} }, 420);
-          }, 80);
-        }, goFlash);
-      } else {
-        if(overlay){ overlay.classList.add('hidden'); setTimeout(()=>{ try{ overlay && overlay.remove(); }catch(e){} }, 420); }
+            overlay.classList.add('hidden');
+            setTimeout(() => { if(overlay) overlay.remove(); }, 500);
+        }, 800);
       }
     }
 
-    function start(){ if(!overlay) create(); overlay.classList.remove('hidden'); if(goText){ goText.classList.remove('visible','go-green','flash'); } loadedFlag = false; playCycle(); }
-    function markLoaded(){ loadedFlag = true; }
-    function stopNow(){ loadedFlag = true; }
-
-    return { start, markLoaded, stopNow };
+    return { 
+        start: function(){ if(!overlay) create(); overlay.classList.remove('hidden'); loadedFlag = false; lightStep(0); }, 
+        markLoaded: function(){ loadedFlag = true; } 
+    };
   })();
 
-  // start overlay animation before beginning heavy fetches
-  try{ startLights.start(); } catch(e){ /* ignore */ }
+  // Lancer l'animation tout de suite
+  startLights.start();
+  // --- FIN BLOC À COLLER ---
 
   // position spinner under header and show it while CSVs load
   try{ if(typeof positionSpinner === 'function') positionSpinner(); } catch(e){}
@@ -960,7 +932,7 @@ async function init(){
     // 1. Récupérer les infos de l'utilisateur (stockées lors du login)
     // On suppose que vous avez stocké 'role' et 'username' dans le localStorage
     const role = localStorage.getItem('userRole'); 
-    const username = localStorage.getItem('userName');
+    const username = localStorage.getItem('userame');
     const authBtn = document.getElementById('authBtn');
 
     // 2. Gestion du bouton Connexion/Déconnexion
