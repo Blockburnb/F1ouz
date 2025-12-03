@@ -24,19 +24,21 @@
         </filter>
       </defs>
       <!-- outer tyre ring (black) with thin red stroke as F1 code -->
-      <g id="spinnerGroup" transform="translate(32,32)">
-        <circle r="28" fill="#000" stroke="#c20b0b" stroke-width="2.6" filter="" />
+      <!-- NOTE: no translate on group; elements explicitly centered at (32,32) -->
+      <g id="spinnerGroup">
+        <circle cx="32" cy="32" r="28" fill="#000" stroke="#c20b0b" stroke-width="2.6" filter="" />
         <!-- subtle outer blur for speed (kept small) -->
-        <circle r="28" fill="none" stroke="#000" stroke-width="0.4" opacity="0.18" filter="url(#outerBlur)" />
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#000" stroke-width="0.4" opacity="0.18" filter="url(#outerBlur)" />
 
         <!-- rim (lighter center) -->
-        <circle r="12" fill="#e9eef3" stroke="#d6dbe0" stroke-width="0.8" />
+        <circle cx="32" cy="32" r="12" fill="#e9eef3" stroke="#d6dbe0" stroke-width="0.8" />
 
-        <!-- 3 spokes (rects rotated) -->
+        <!-- 3 spokes (rects rotated around center 32,32) -->
         <g fill="#cfd6dc" stroke="none">
-          <rect x="-1.2" y="-12" width="2.4" height="24" rx="0.6" transform="rotate(0)" />
-          <rect x="-1.2" y="-12" width="2.4" height="24" rx="0.6" transform="rotate(120)" />
-          <rect x="-1.2" y="-12" width="2.4" height="24" rx="0.6" transform="rotate(240)" />
+          <!-- rect positions adjusted so their local center aligns with SVG center -->
+          <rect x="30.8" y="20" width="2.4" height="24" rx="0.6" transform="rotate(0 32 32)" />
+          <rect x="30.8" y="20" width="2.4" height="24" rx="0.6" transform="rotate(120 32 32)" />
+          <rect x="30.8" y="20" width="2.4" height="24" rx="0.6" transform="rotate(240 32 32)" />
         </g>
       </g>
     </svg>

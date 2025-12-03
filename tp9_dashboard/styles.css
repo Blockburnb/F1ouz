@@ -231,16 +231,15 @@ button.active{background:#2b8cc4;color:white;border-color:#19607f}
 
 /* F1 tyre spinner (small, 24-32px) */
 .spinner-wrap{ position: absolute; right: 18px; top: 18px; width: 32px; height: 32px; display: none; align-items:center; justify-content:center; z-index:11000 }
-.f1-spinner{ width: var(--f1-spinner-size,28px); height: var(--f1-spinner-size,28px); display:block }
-
+/* Use view-box so transform-origin percentages map to the SVG viewBox coordinates (fixes centering) */
+.f1-spinner{ width: var(--f1-spinner-size,28px); height: var(--f1-spinner-size,28px); display:block; transform-box: view-box; transform-origin: 50% 50%; shape-rendering: geometricPrecision; }
 /* rotation animation */
 @keyframes f1-rotate { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-.f1-spinner #spinnerGroup { transform-origin: 32px 32px; }
-.f1-spinner.rotating #spinnerGroup { animation: f1-rotate var(--f1-spinner-duration,0.95s) linear infinite }
-
-/* make sure small sizes remain crisp */
-.f1-spinner { shape-rendering: geometricPrecision; }
-
+/* Rotate the whole SVG element only (more reliable than rotating an internal group that also has an inline transform) */
+.f1-spinner.rotating { animation: f1-rotate var(--f1-spinner-duration,0.95s) linear infinite; }
+/* Ensure inner group does not run its own animation (avoid double transforms & offset center)
+   and set a precise SVG user-unit origin matching the viewBox center (32,32) */
+.f1-spinner #spinnerGroup { transform-box: view-box; transform-origin: 32px 32px; animation: none !important; }
 /* hidden helper when not loading */
 .spinner-hidden{ display: none !important }
 .spinner-visible{ display:flex !important }
