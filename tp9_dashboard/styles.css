@@ -1,376 +1,443 @@
-/* Brand variables and global base styles - consolidated and syntax-checked */
+/* =========================================
+   VARIABLES & THEME F1
+   ========================================= */
 :root {
-  --bg: #f3f3f3;
+  /* Palette de couleurs F1 Modernisée */
+  --bg-color: #f0f2f5;
+  --bg-pattern: #e6e9ef;
   --panel: #ffffff;
-  --accent: #e10600; /* rouge F1 */
-  --dark: #15151e;   /* noir F1 */
-  --muted: #666666;
-  --text: #222222;
-  --soft: #e6f0fb;
-  --border: rgba(0,0,0,0.06);
-  --card-radius: 10px;
-  --card-shadow: 0 8px 20px rgba(16,18,24,0.08);
+  --accent: #e10600; /* Rouge F1 officiel */
+  --accent-hover: #b30000;
+  --dark: #15151e;   /* Noir profond "Asphalte" */
+  --text-main: #15151e;
+  --text-muted: #6c757d;
+  --border-light: #e0e0e0;
+  
+  /* Effets */
+  --card-radius: 12px;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --card-border-top: 4px solid var(--accent);
+  --transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* Global reset */
-* { box-sizing: border-box; }
+/* =========================================
+   RESET & GLOBAL
+   ========================================= */
+* { box-sizing: border-box; outline: none; }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
   margin: 0;
-  padding: 0 1rem;
-  background-color: var(--bg);
-  color: var(--text);
+  padding: 0;
+  background-color: var(--bg-color);
+  /* Subtile texture de fond "Grille technique" */
+  background-image: 
+    linear-gradient(rgba(21, 21, 30, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(21, 21, 30, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  color: var(--text-main);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header / page title */
+/* =========================================
+   HEADER (Style Cockpit)
+   ========================================= */
 header {
-  background: linear-gradient(180deg, var(--dark), #0f0f15);
+  background: var(--dark);
   color: white;
-  padding: 22px 20px;
+  padding: 1.2rem 2rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   border-bottom: 4px solid var(--accent);
-}
-header h1 { margin: 0 0 6px 0; font-size: 1.45rem; }
-header p { margin: 0; opacity: 0.85; font-size: 0.95rem; }
-
-/* Global filters area (sous le titre) */
-.global-filters {
   display: flex;
-  gap: 12px;
   align-items: center;
-  padding: 14px 18px;
-  max-width: 1650px; /* increased by ~25% additional */
-  margin: 18px auto;
-}
-
-/* Header controls removed (dark mode UI disabled) */
-.global-filters .controls { display: flex; gap: 8px; align-items: center; }
-.global-filters select { padding: 8px 10px; border-radius: 6px; border: 1px solid #ddd; background: white; }
-
-/* Buttons (mode) */
-.global-filters button,
-.controls button {
-  background: transparent;
-  border: 1px solid rgba(0,0,0,0.08);
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--dark);
-  font-weight: 600;
-  transition: all 0.18s ease;
-}
-.global-filters button:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.05); }
-.global-filters button.active,
-.global-filters button#btnDrivers.active,
-.global-filters button#btnConstructors.active {
-  background: var(--accent);
-  color: white;
-  border-color: rgba(0,0,0,0.15);
-}
-
-/* Dashboard grid and cards */
-.dashboard-grid { 
-  display: grid;
-  /* further increase by ~25% */
-  grid-template-columns: repeat(auto-fit, minmax(412px, 1fr));
-  gap: 18px;
-  max-width: 1650px; /* increased by ~25% additional */
-  margin: 12px auto 60px auto;
-  padding: 0 18px;
-}
-.card {
-  background: var(--panel);
-  border-radius: var(--card-radius);
-  padding: 14px;
-  box-shadow: var(--card-shadow);
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   position: relative;
+  overflow: hidden;
 }
-.card h2 { margin: 0 0 12px 0; font-size: 1.05rem; display:flex; gap:8px; align-items:center; }
-.card .chart { flex: 1 1 auto; min-height: 220px; }
-.card svg { width: 100%; height: 100%; display:block; }
 
-/* Info icon */
-.info { display:inline-flex; align-items:center; cursor:help; }
-.info svg { display:block; }
-
-/* Legend (pie) moved to DOM .legend */
-.legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-.legend-item { display:flex; gap:8px; align-items:center; font-size:0.9rem; }
-.legend-swatch { width:14px; height:14px; border-radius:3px; display:inline-block; }
-
-/* Tooltip for charts and info icons - use a single fixed tooltip element that follows the mouse */
-.tooltip {
-  position: fixed; /* fixed so clientX/Y positioning is stable */
+/* Effet "Vitesse" en arrière-plan du header */
+header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255,255,255,0.03) 10px,
+    rgba(255,255,255,0.03) 20px
+  );
   pointer-events: none;
-  background: var(--dark); /* match header / site dark color */
-  color: #ffffff;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  font-size: 13px;
-  font-family: inherit; /* inherit site font (Segoe UI) */
-  line-height: 1.3;
-  border: 2px solid var(--accent); /* accent border to match brand */
-  max-width: 320px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  z-index: 9999;
-  display: none;
-  transition: opacity 160ms ease;
-  opacity: 0.98;
 }
 
-/* Expanded card modal */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:80; }
-.card.expanded { width: 92vw; max-width: 1300px; height: 82vh; overflow:auto; }
-.card .close-btn { position:absolute; right:14px; top:14px; background:var(--panel); border-radius:6px; border:1px solid var(--border); padding:6px 8px; cursor:pointer; }
+header div { z-index: 1; }
 
-/* Tables: sticky header */
-thead th {
-  position: sticky;
-  top: 0;
-  background-color: var(--dark);
-  color: white;
-  padding: 12px;
-  text-align: left;
-  z-index: 10;
-  border-bottom: 3px solid var(--accent);
+header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-style: italic; /* Style Racing */
+  letter-spacing: 1px;
 }
 
-td { padding: 10px 12px; border-bottom: 1px solid #eee; }
-tr:hover { background-color: #fff5f5; }
-
-/* Small helpers */
-.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-
-/* Responsive tweaks */
-@media (max-width: 700px) {
-  .global-filters { flex-direction: column; align-items: stretch; }
-  header { padding: 16px 12px; }
+header p {
+  margin: 4px 0 0 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+  font-weight: 300;
 }
 
-/* --- Legacy / existing dashboard rules (kept, de-duplicated and aligned) --- */
-*{box-sizing:border-box;font-family:Segoe UI, Roboto, Arial, sans-serif}
-body{margin:0;padding:1rem;background:#f5f7fb;color:#0b2035}
-header{margin-bottom:1rem}
-h1{margin:.2rem 0}
-main.dashboard-grid{display:grid;/* increased further by ~25% */grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:1rem}
-.card{background:white;border-radius:8px;padding:1rem;box-shadow:0 2px 6px rgba(11,32,53,0.08)}
-.controls{margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap}
-button{margin-right:.5rem;padding:.4rem .8rem;border-radius:6px;border:1px solid #cbd6e0;background:#eef6ff;cursor:pointer}
-select{padding:.4rem;border-radius:6px}
-table{width:100%;border-collapse:collapse;margin-top:.5rem}
-th,td{padding:.4rem .6rem;border-bottom:1px solid #eef2f6;text-align:left}
-th{background:#f2f6fb}
-.chart{min-height:260px;display:flex;flex-direction:column;gap:8px}
-.chart svg{width:100%;flex:1;height:auto}
-.legend{display:flex;flex-wrap:wrap;gap:8px;padding-top:8px}
-.legend-item{display:flex;align-items:center;gap:6px;padding-right:10px}
-.legend-swatch{width:12px;height:12px;border-radius:2px;display:inline-block}
-.legend-label{font-size:12px;color:#0b2035}
-footer{margin-top:1rem;text-align:center}
-@media(max-width:600px){.chart{height:200px}}
-.global-filters{display:flex;gap:1rem;align-items:center;margin-bottom:1rem}
-.global-filters .controls{display:flex;gap:.5rem;align-items:center}
-button.active{background:#2b8cc4;color:white;border-color:#19607f}
-#yearSelect{margin-left:.5rem}
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
-.info{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#e6f0fb;color:#0b2035;margin-left:.5rem;cursor:default;border:1px solid #c7ddf5;overflow:hidden}
-.info svg{display:block;width:12px;height:12px}
-.tooltip{position:fixed;background:rgba(11,32,53,0.95);color:white;padding:.6rem .8rem;border-radius:6px;font-size:13px;max-width:320px;pointer-events:none;z-index:9999;display:none}
-/* expanded card styles */
-.card.expanded{position:fixed;top:40px;left:40px;right:40px;bottom:40px;z-index:2000;padding:1rem;border-radius:8px;box-shadow:0 8px 30px rgba(11,32,53,0.4);background:white;overflow:auto}
-.card.expanded .chart{height:calc(100% - 56px)}
-/* overlay behind expanded card */
-.overlay{position:fixed;inset:0;background:rgba(11,32,53,0.35);z-index:1990}
-/* close button */
-.card .close-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:6px;border:none;background:#f2f6fb;color:#0b2035;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
-.card .close-btn:hover{background:#e6f0fb}
-/* ensure svg fills expanded chart area */
-.card.expanded svg{width:100%;height:100%}
-
-/* Start lights overlay (Feux de départ) */
-.start-overlay{
-  position: fixed;
-  inset: 0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(5,5,10,0.92); /* more opaque for clearer focus during loading */
-  z-index: 10000;
-  transition: opacity 360ms ease, visibility 360ms ease;
-}
-.start-overlay.hidden{ opacity: 0; visibility: hidden; pointer-events: none; }
-.start-box{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:18px;
-}
-.start-lights{ display:flex; gap:12px; align-items:center; justify-content:center; }
-.start-lights .light{
-  width: 34px; height:34px; border-radius:50%; background:#444; box-shadow: inset 0 -4px 8px rgba(0,0,0,0.4);
-  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-  transform: scale(0.98);
-}
-.start-lights .light.on{
-  background: var(--accent);
-  box-shadow: 0 0 18px rgba(225,16,0,0.95), inset 0 -4px 8px rgba(0,0,0,0.2);
-  transform: scale(1.06);
-}
-.go-text{
-  color: white; font-weight:800; font-size:1.6rem; letter-spacing:0.06em; opacity:0; transform: translateY(6px); transition: all 260ms ease;
-}
-.go-text.visible{ opacity:1; transform: translateY(0); }
-.go-text.go-green{ color: #27ae60; text-shadow: 0 6px 18px rgba(39,174,96,0.28); }
-.go-text.flash{ transform: scale(1.18); text-shadow: 0 10px 30px rgba(39,174,96,0.45); transition: transform 180ms ease, text-shadow 180ms ease; }
-.loading-sub{ color: #ddd; font-size:0.95rem; opacity:0.95 }
-
-/* F1 tyre spinner (small, 24-32px) */
-.spinner-wrap{ position: absolute; right: 18px; top: 18px; width: 32px; height: 32px; display: none; align-items:center; justify-content:center; z-index:11000 }
-/* Use view-box so transform-origin percentages map to the SVG viewBox coordinates (fixes centering) */
-.f1-spinner{ width: var(--f1-spinner-size,28px); height: var(--f1-spinner-size,28px); display:block; transform-box: view-box; transform-origin: 50% 50%; shape-rendering: geometricPrecision; }
-/* rotation animation */
-@keyframes f1-rotate { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
-/* Rotate the whole SVG element only (more reliable than rotating an internal group that also has an inline transform) */
-.f1-spinner.rotating { animation: f1-rotate var(--f1-spinner-duration,0.95s) linear infinite; }
-/* Ensure inner group does not run its own animation (avoid double transforms & offset center)
-   and set a precise SVG user-unit origin matching the viewBox center (32,32) */
-.f1-spinner #spinnerGroup { transform-box: view-box; transform-origin: 32px 32px; animation: none !important; }
-/* hidden helper when not loading */
-.spinner-hidden{ display: none !important }
-.spinner-visible{ display:flex !important }
-
-/* smaller on mobile */
-@media(max-width:480px){ .start-lights .light{ width:26px; height:26px } .go-text{ font-size:1.2rem } }
-
-/* --- Styles pour le bouton Connexion/Déconnexion --- */
+/* Bouton Connexion dans le header */
 #authBtn {
-  margin-left: auto; /* Pousse le bouton à droite dans le header */
   background-color: var(--accent);
   color: white;
   border: none;
-  font-weight: bold;
-  padding: 8px 16px;
-  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 10px 20px;
+  border-radius: 30px; /* Pill shape */
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
-  transition: background 0.3s;
+  transition: var(--transition);
+  box-shadow: 0 4px 10px rgba(225, 6, 0, 0.3);
+  z-index: 2;
 }
 
 #authBtn:hover {
-  background-color: #b30000;
+  background-color: white;
+  color: var(--accent);
+  transform: translateY(-2px);
 }
 
-#authBtn.logout-mode {
-  background-color: #333; /* Gris foncé pour la déconnexion */
-}
-
-/* --- Styles pour le blocage du graphique (Overlay) --- */
-.card.locked {
-  position: relative;
-  overflow: hidden; /* Empêche le défilement */
-}
-
-/* Floute le contenu du graphique pour qu'on devine qu'il y a quelque chose sans le voir */
-.card.locked .chart {
-  filter: blur(8px);
-  opacity: 0.4;
-  pointer-events: none; /* Empêche de cliquer sur les bulles floutées */
-  user-select: none;
-}
-
-/* Le bloc qui contient le message */
-.lock-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+/* =========================================
+   FILTRES GLOBAUX (Barre de commande)
+   ========================================= */
+.global-filters {
+  background: var(--panel);
+  margin: 20px auto;
+  max-width: 98%;
+  padding: 15px 20px;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 20px;
   align-items: center;
-  justify-content: center;
-  z-index: 10;
-  background: rgba(255, 255, 255, 0.1); /* Légèrement visible par dessus */
+  border-left: 5px solid var(--dark); /* Marqueur visuel */
 }
 
-.lock-message {
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Style des labels (cachés visuellement mais présents pour l'accessibilité) */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); border: 0;
+}
+
+/* SELECTS & BUTTONS - UI Moderne */
+select, button {
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+/* Custom Select Styling */
+select {
+  appearance: none; /* Retire le style par défaut du navigateur */
+  background-color: #f8f9fa;
+  border: 1px solid var(--border-light);
+  padding: 10px 35px 10px 15px;
+  border-radius: 6px;
+  color: var(--dark);
+  font-weight: 600;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 16px;
+  transition: var(--transition);
+}
+
+select:hover, select:focus {
+  border-color: var(--accent);
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
+}
+
+/* Boutons de filtres */
+.global-filters button {
   background: white;
-  padding: 20px 30px;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  text-align: center;
-  border: 1px solid #ddd;
-  max-width: 80%;
+  border: 1px solid var(--border-light);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
 }
 
-.lock-message h3 {
-  margin-top: 0;
+.global-filters button:hover {
+  border-color: var(--dark);
   color: var(--dark);
 }
 
-.lock-message p {
-  color: var(--muted);
-  margin-bottom: 15px;
+/* État Actif des boutons */
+.global-filters button.active,
+.global-filters button#btnDrivers.active,
+.global-filters button#btnConstructors.active {
+  background-color: var(--dark);
+  color: white;
+  border-color: var(--dark);
+  box-shadow: 0 4px 10px rgba(21, 21, 30, 0.3);
 }
 
-.lock-icon {
-  font-size: 40px;
-  margin-bottom: 10px;
-  display: block;
+/* Bouton Reset */
+#btnResetFilters {
+  color: var(--accent);
+  border-color: rgba(225, 6, 0, 0.2);
+}
+#btnResetFilters:hover {
+  background-color: var(--accent);
+  color: white;
 }
 
-/* Ecran de chargement
-/* --- ANIMATION FEUX DE DÉPART (À AJOUTER À LA FIN) --- */
+/* Info Icon */
+.info {
+  cursor: help;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  display: flex; 
+  align-items: center;
+}
+.info:hover { opacity: 1; }
+.info svg circle { fill: transparent; stroke: var(--text-muted); }
+.info svg rect, .info svg circle:last-child { fill: var(--text-muted); }
+
+
+/* =========================================
+   DASHBOARD GRID & CARDS
+   ========================================= */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  gap: 25px;
+  max-width: 98%;
+  margin: 0 auto 60px auto;
+  padding-bottom: 40px;
+}
+
+.card {
+  background: var(--panel);
+  border-radius: var(--card-radius);
+  padding: 20px;
+  /* Ombre douce pour effet de flottement */
+  box-shadow: var(--card-shadow);
+  border: 1px solid white; /* Border subtile */
+  
+  /* La touche F1 : Bordure supérieure rouge */
+  border-top: var(--card-border-top);
+  
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Titres des cartes */
+.card h2 {
+  margin: 0 0 15px 0;
+  font-size: 1rem;
+  color: var(--dark);
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+/* Conteneur Graphique */
+.card .chart {
+  flex: 1;
+  min-height: 280px;
+  position: relative;
+}
+
+/* SVG Chart fills */
+.card svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* =========================================
+   TOOLTIPS & LÉGENDES
+   ========================================= */
+.tooltip {
+  position: fixed;
+  background: rgba(21, 21, 30, 0.95); /* Fond foncé */
+  backdrop-filter: blur(4px);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  border-left: 3px solid var(--accent); /* Accent rouge */
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  pointer-events: none;
+  z-index: 10000;
+  display: none;
+  max-width: 300px;
+}
+
+/* Légendes (Pie chart etc) */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 15px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-swatch { width: 10px; height: 10px; border-radius: 50%; }
+
+/* =========================================
+   LOADER & OVERLAYS
+   ========================================= */
+/* F1 Spinner (Roue) */
+.spinner-wrap {
+  position: absolute; right: 20px; top: 22px;
+  z-index: 100;
+}
+
+/* Start Lights Overlay (Feux de départ) */
 .start-overlay {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: #000; z-index: 9999;
+  position: fixed; inset: 0;
+  background: #000; 
+  z-index: 9999;
   display: flex; justify-content: center; align-items: center;
-  transition: opacity 0.4s ease, visibility 0.4s;
+  transition: opacity 0.5s ease, visibility 0.5s;
 }
 .start-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 
 .start-box {
-  background: #15151e; padding: 40px 60px; border-radius: 20px;
-  border: 2px solid #333; text-align: center;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  background: #101014;
+  padding: 50px;
+  border-radius: 20px;
+  border: 1px solid #333;
+  text-align: center;
+  box-shadow: 0 0 50px rgba(0,0,0,0.8);
 }
 
 .start-lights {
-  display: flex; gap: 15px; margin-bottom: 30px;
-  background: #000; padding: 15px; border-radius: 10px; border: 1px solid #333;
+  display: flex; gap: 15px; margin-bottom: 40px;
+  background: #000; padding: 20px; border-radius: 100px; border: 2px solid #333;
 }
 
 .light {
-  width: 60px; height: 60px; border-radius: 50%;
-  background: #330000; /* Éteint (rouge sombre) */
-  border: 4px solid #1a1a1a;
+  width: 50px; height: 50px; border-radius: 50%;
+  background: #2a0a0a;
+  border: 4px solid #111;
   transition: background 0.1s, box-shadow 0.1s;
 }
 .light.on {
-  background: #ff0000; /* Allumé */
-  box-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000;
+  background: #ff0000;
+  box-shadow: 0 0 20px #ff0000;
 }
 
 .go-text {
-  font-family: sans-serif; font-size: 5rem; font-weight: 900; font-style: italic;
-  color: #15151e; /* Caché au début */
-  text-transform: uppercase; margin: 0; line-height: 1;
-  transition: transform 0.2s;
-  transform: scale(0.5); opacity: 0;
+  font-family: 'Arial Black', sans-serif;
+  font-size: 6rem;
+  font-style: italic;
+  color: transparent;
+  -webkit-text-stroke: 2px white;
+  text-transform: uppercase;
+  margin: 0; line-height: 1;
+  opacity: 0; transform: scale(0.8);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.go-text.visible { opacity: 1; }
-.go-text.go-green { color: #2ecc71; text-shadow: 0 0 40px #2ecc71; transform: scale(1.2); }
-.go-text.flash { transform: scale(1.5); }
+.go-text.visible { opacity: 1; transform: scale(1); }
+.go-text.go-green { 
+  color: #2ecc71; 
+  -webkit-text-stroke: 0;
+  text-shadow: 0 0 30px rgba(46, 204, 113, 0.6);
+}
 
 .loading-sub {
-  margin-top: 20px; color: #666; font-family: monospace; font-size: 0.9rem;
+  margin-top: 20px; color: #666; font-family: monospace; font-size: 0.85rem; letter-spacing: 2px;
 }
+
+/* =========================================
+   FOOTER
+   ========================================= */
+footer {
+  text-align: center;
+  padding: 30px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  border-top: 1px solid #e0e0e0;
+  margin-top: auto;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 768px) {
+  header { flex-direction: column; align-items: stretch; gap: 15px; text-align: center; }
+  #authBtn { justify-content: center; width: 100%; }
+  .global-filters { flex-direction: column; align-items: stretch; }
+  .controls { flex-wrap: wrap; justify-content: center; }
+  select, .global-filters button { width: 100%; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+/* =========================================
+   EXPANDED VIEW & LOCKED
+   ========================================= */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(5px);
+  z-index: 2000; display:flex; align-items:center; justify-content:center;
+}
+.card.expanded {
+  width: 90vw; height: 85vh; max-width: 1400px;
+  position: relative; z-index: 2001;
+}
+.close-btn {
+  position: absolute; top: 15px; right: 15px;
+  background: #f0f2f5; border: none; width: 32px; height: 32px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-weight: bold; color: var(--dark);
+}
+.close-btn:hover { background: var(--accent); color: white; }
+
+/* Locked state (Login required) */
+.card.locked .chart { filter: blur(10px); opacity: 0.3; pointer-events: none; }
+.lock-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10;
+}
+.lock-message {
+  background: white; padding: 25px; border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  text-align: center; max-width: 80%; border: 1px solid #eee;
+}
+.lock-icon { font-size: 2rem; display: block; margin-bottom: 10px; }
