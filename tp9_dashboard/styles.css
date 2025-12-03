@@ -1,0 +1,248 @@
+/* Brand variables and global base styles - consolidated and syntax-checked */
+:root {
+  --bg: #f3f3f3;
+  --panel: #ffffff;
+  --accent: #e10600; /* rouge F1 */
+  --dark: #15151e;   /* noir F1 */
+  --muted: #666666;
+  --text: #222222;
+  --soft: #e6f0fb;
+  --border: rgba(0,0,0,0.06);
+  --card-radius: 10px;
+  --card-shadow: 0 8px 20px rgba(16,18,24,0.08);
+}
+
+/* Global reset */
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0 1rem;
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Header / page title */
+header {
+  background: linear-gradient(180deg, var(--dark), #0f0f15);
+  color: white;
+  padding: 22px 20px;
+  border-bottom: 4px solid var(--accent);
+}
+header h1 { margin: 0 0 6px 0; font-size: 1.45rem; }
+header p { margin: 0; opacity: 0.85; font-size: 0.95rem; }
+
+/* Global filters area (sous le titre) */
+.global-filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  max-width: 1650px; /* increased by ~25% additional */
+  margin: 18px auto;
+}
+
+/* Header controls removed (dark mode UI disabled) */
+.global-filters .controls { display: flex; gap: 8px; align-items: center; }
+.global-filters select { padding: 8px 10px; border-radius: 6px; border: 1px solid #ddd; background: white; }
+
+/* Buttons (mode) */
+.global-filters button,
+.controls button {
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--dark);
+  font-weight: 600;
+  transition: all 0.18s ease;
+}
+.global-filters button:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.05); }
+.global-filters button.active,
+.global-filters button#btnDrivers.active,
+.global-filters button#btnConstructors.active {
+  background: var(--accent);
+  color: white;
+  border-color: rgba(0,0,0,0.15);
+}
+
+/* Dashboard grid and cards */
+.dashboard-grid { 
+  display: grid;
+  /* further increase by ~25% */
+  grid-template-columns: repeat(auto-fit, minmax(412px, 1fr));
+  gap: 18px;
+  max-width: 1650px; /* increased by ~25% additional */
+  margin: 12px auto 60px auto;
+  padding: 0 18px;
+}
+.card {
+  background: var(--panel);
+  border-radius: var(--card-radius);
+  padding: 14px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.card h2 { margin: 0 0 12px 0; font-size: 1.05rem; display:flex; gap:8px; align-items:center; }
+.card .chart { flex: 1 1 auto; min-height: 220px; }
+.card svg { width: 100%; height: 100%; display:block; }
+
+/* Info icon */
+.info { display:inline-flex; align-items:center; cursor:help; }
+.info svg { display:block; }
+
+/* Legend (pie) moved to DOM .legend */
+.legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.legend-item { display:flex; gap:8px; align-items:center; font-size:0.9rem; }
+.legend-swatch { width:14px; height:14px; border-radius:3px; display:inline-block; }
+
+/* Tooltip for charts and info icons - use a single fixed tooltip element that follows the mouse */
+.tooltip {
+  position: fixed; /* fixed so clientX/Y positioning is stable */
+  pointer-events: none;
+  background: var(--dark); /* match header / site dark color */
+  color: #ffffff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit; /* inherit site font (Segoe UI) */
+  line-height: 1.3;
+  border: 2px solid var(--accent); /* accent border to match brand */
+  max-width: 320px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+  z-index: 9999;
+  display: none;
+  transition: opacity 160ms ease;
+  opacity: 0.98;
+}
+
+/* Expanded card modal */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:80; }
+.card.expanded { width: 92vw; max-width: 1300px; height: 82vh; overflow:auto; }
+.card .close-btn { position:absolute; right:14px; top:14px; background:var(--panel); border-radius:6px; border:1px solid var(--border); padding:6px 8px; cursor:pointer; }
+
+/* Tables: sticky header */
+thead th {
+  position: sticky;
+  top: 0;
+  background-color: var(--dark);
+  color: white;
+  padding: 12px;
+  text-align: left;
+  z-index: 10;
+  border-bottom: 3px solid var(--accent);
+}
+
+td { padding: 10px 12px; border-bottom: 1px solid #eee; }
+tr:hover { background-color: #fff5f5; }
+
+/* Small helpers */
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* Responsive tweaks */
+@media (max-width: 700px) {
+  .global-filters { flex-direction: column; align-items: stretch; }
+  header { padding: 16px 12px; }
+}
+
+/* --- Legacy / existing dashboard rules (kept, de-duplicated and aligned) --- */
+*{box-sizing:border-box;font-family:Segoe UI, Roboto, Arial, sans-serif}
+body{margin:0;padding:1rem;background:#f5f7fb;color:#0b2035}
+header{margin-bottom:1rem}
+h1{margin:.2rem 0}
+main.dashboard-grid{display:grid;/* increased further by ~25% */grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:1rem}
+.card{background:white;border-radius:8px;padding:1rem;box-shadow:0 2px 6px rgba(11,32,53,0.08)}
+.controls{margin:.5rem 0;display:flex;gap:.5rem;flex-wrap:wrap}
+button{margin-right:.5rem;padding:.4rem .8rem;border-radius:6px;border:1px solid #cbd6e0;background:#eef6ff;cursor:pointer}
+select{padding:.4rem;border-radius:6px}
+table{width:100%;border-collapse:collapse;margin-top:.5rem}
+th,td{padding:.4rem .6rem;border-bottom:1px solid #eef2f6;text-align:left}
+th{background:#f2f6fb}
+.chart{min-height:260px;display:flex;flex-direction:column;gap:8px}
+.chart svg{width:100%;flex:1;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:8px;padding-top:8px}
+.legend-item{display:flex;align-items:center;gap:6px;padding-right:10px}
+.legend-swatch{width:12px;height:12px;border-radius:2px;display:inline-block}
+.legend-label{font-size:12px;color:#0b2035}
+footer{margin-top:1rem;text-align:center}
+@media(max-width:600px){.chart{height:200px}}
+.global-filters{display:flex;gap:1rem;align-items:center;margin-bottom:1rem}
+.global-filters .controls{display:flex;gap:.5rem;align-items:center}
+button.active{background:#2b8cc4;color:white;border-color:#19607f}
+#yearSelect{margin-left:.5rem}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.info{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#e6f0fb;color:#0b2035;margin-left:.5rem;cursor:default;border:1px solid #c7ddf5;overflow:hidden}
+.info svg{display:block;width:12px;height:12px}
+.tooltip{position:fixed;background:rgba(11,32,53,0.95);color:white;padding:.6rem .8rem;border-radius:6px;font-size:13px;max-width:320px;pointer-events:none;z-index:9999;display:none}
+/* expanded card styles */
+.card.expanded{position:fixed;top:40px;left:40px;right:40px;bottom:40px;z-index:2000;padding:1rem;border-radius:8px;box-shadow:0 8px 30px rgba(11,32,53,0.4);background:white;overflow:auto}
+.card.expanded .chart{height:calc(100% - 56px)}
+/* overlay behind expanded card */
+.overlay{position:fixed;inset:0;background:rgba(11,32,53,0.35);z-index:1990}
+/* close button */
+.card .close-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:6px;border:none;background:#f2f6fb;color:#0b2035;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.card .close-btn:hover{background:#e6f0fb}
+/* ensure svg fills expanded chart area */
+.card.expanded svg{width:100%;height:100%}
+
+/* Start lights overlay (Feux de départ) */
+.start-overlay{
+  position: fixed;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(5,5,10,0.92); /* more opaque for clearer focus during loading */
+  z-index: 10000;
+  transition: opacity 360ms ease, visibility 360ms ease;
+}
+.start-overlay.hidden{ opacity: 0; visibility: hidden; pointer-events: none; }
+.start-box{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:18px;
+}
+.start-lights{ display:flex; gap:12px; align-items:center; justify-content:center; }
+.start-lights .light{
+  width: 34px; height:34px; border-radius:50%; background:#444; box-shadow: inset 0 -4px 8px rgba(0,0,0,0.4);
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  transform: scale(0.98);
+}
+.start-lights .light.on{
+  background: var(--accent);
+  box-shadow: 0 0 18px rgba(225,16,0,0.95), inset 0 -4px 8px rgba(0,0,0,0.2);
+  transform: scale(1.06);
+}
+.go-text{
+  color: white; font-weight:800; font-size:1.6rem; letter-spacing:0.06em; opacity:0; transform: translateY(6px); transition: all 260ms ease;
+}
+.go-text.visible{ opacity:1; transform: translateY(0); }
+.go-text.go-green{ color: #27ae60; text-shadow: 0 6px 18px rgba(39,174,96,0.28); }
+.go-text.flash{ transform: scale(1.18); text-shadow: 0 10px 30px rgba(39,174,96,0.45); transition: transform 180ms ease, text-shadow 180ms ease; }
+.loading-sub{ color: #ddd; font-size:0.95rem; opacity:0.95 }
+
+/* F1 tyre spinner (small, 24-32px) */
+.spinner-wrap{ position: absolute; right: 18px; top: 18px; width: 32px; height: 32px; display: none; align-items:center; justify-content:center; z-index:11000 }
+/* Use view-box so transform-origin percentages map to the SVG viewBox coordinates (fixes centering) */
+.f1-spinner{ width: var(--f1-spinner-size,28px); height: var(--f1-spinner-size,28px); display:block; transform-box: view-box; transform-origin: 50% 50%; shape-rendering: geometricPrecision; }
+/* rotation animation */
+@keyframes f1-rotate { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+/* Rotate the whole SVG element only (more reliable than rotating an internal group that also has an inline transform) */
+.f1-spinner.rotating { animation: f1-rotate var(--f1-spinner-duration,0.95s) linear infinite; }
+/* Ensure inner group does not run its own animation (avoid double transforms & offset center)
+   and set a precise SVG user-unit origin matching the viewBox center (32,32) */
+.f1-spinner #spinnerGroup { transform-box: view-box; transform-origin: 32px 32px; animation: none !important; }
+/* hidden helper when not loading */
+.spinner-hidden{ display: none !important }
+.spinner-visible{ display:flex !important }
+
+/* smaller on mobile */
+@media(max-width:480px){ .start-lights .light{ width:26px; height:26px } .go-text{ font-size:1.2rem } }
