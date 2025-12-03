@@ -953,5 +953,66 @@ async function init(){
   makeCardExpandable();
 
 }
+// ... (tout votre code existant dans init) ...
 
+  // --- GESTION DE LA SÉCURITÉ ET DU BOUTON ---
+  function handleAuthAndSecurity() {
+    // 1. Récupérer les infos de l'utilisateur (stockées lors du login)
+    // On suppose que vous avez stocké 'role' et 'username' dans le localStorage
+    const role = localStorage.getItem('role'); 
+    const username = localStorage.getItem('username');
+    const authBtn = document.getElementById('authBtn');
+
+    // 2. Gestion du bouton Connexion/Déconnexion
+    if (username) {
+      // Si connecté
+      authBtn.textContent = `Déconnexion (${username})`;
+      authBtn.classList.add('logout-mode');
+      authBtn.href = "#"; // On désactive le lien par défaut
+      
+      authBtn.onclick = (e) => {
+        e.preventDefault();
+        // Déconnexion : on vide le stockage et on redirige
+        localStorage.clear();
+        window.location.href = "../index.html"; // Retour à l'accueil
+      };
+    } else {
+      // Si pas connecté
+      authBtn.textContent = "Connexion Membre";
+      authBtn.classList.remove('logout-mode');
+      authBtn.href = "../login.html"; // Lien vers la page de login
+    }
+
+    // 3. Protection du graphique complexe (Bubble Chart)
+    // L'ID de la section du graphique complexe est 'pitStopsDriver'
+    const protectedSection = document.getElementById('pitStopsDriver');
+    
+    // Si l'utilisateur n'est PAS admin (ou n'est pas connecté du tout)
+    if (role !== 'admin') {
+      if (protectedSection) {
+        // Ajouter la classe CSS pour flouter
+        protectedSection.classList.add('locked');
+
+        // Créer le message de blocage
+        const overlay = document.createElement('div');
+        overlay.className = 'lock-overlay';
+        overlay.innerHTML = `
+          <div class="lock-message">
+            <span class="lock-icon">🔒</span>
+            <h3>Accès Restreint</h3>
+            <p>Vous devez être un <strong>administrateur</strong> pour analyser les données détaillées des pitstops.</p>
+            ${!username ? '<a href="../login.html" style="color: var(--accent); font-weight:bold;">Se connecter</a>' : ''}
+          </div>
+        `;
+        
+        // Ajouter le message sur le graphique
+        protectedSection.appendChild(overlay);
+      }
+    }
+  }
+
+  // Appeler la fonction de sécurité
+  handleAuthAndSecurity();
+
+  // ... (fin de la fonction init)
 init().catch(err=>{ console.error(err); document.body.insertAdjacentHTML('beforeend', '<p style="color:red">Erreur: '+err.message+'</p>') });

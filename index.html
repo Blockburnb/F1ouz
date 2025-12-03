@@ -6,6 +6,43 @@
     <title>F1 Analytics - Accueil</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Ajout de styles spécifiques pour les nouveaux boutons -->
+    <style>
+        /* Style pour le bouton du menu */
+        .btn-dashboard {
+            background-color: #e10600; /* Rouge F1 */
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 15px;
+            border: 1px solid #e10600;
+            transition: background 0.3s;
+        }
+        .btn-dashboard:hover {
+            background-color: #b30000;
+        }
+
+        /* Style pour le gros bouton de la section Hero */
+        .btn-hero {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 25px;
+            background-color: white;
+            color: #15151e; /* Noir F1 */
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 5px;
+            font-size: 1.1em;
+            transition: transform 0.2s;
+        }
+        .btn-hero:hover {
+            transform: scale(1.05);
+            background-color: #f0f0f0;
+        }
+    </style>
 </head>
 <body>
 
@@ -13,6 +50,9 @@
     <nav class="navbar">
         <div class="logo">🏁 F1 Analytics</div>
         <div id="nav-auth" class="nav-links">
+            <!-- AJOUT 1 : Bouton Dashboard dans le menu -->
+            <a href="tp9_dashboard/dashboard.html" class="btn-dashboard">📊 Dashboard</a>
+            
             <a href="login.html" class="btn-login">Connexion Membre</a>
         </div>
     </nav>
@@ -25,7 +65,11 @@
                 Explorez plus de 70 ans de compétition. Consultez les statistiques publiques ci-dessous 
                 ou connectez-vous pour accéder à votre espace personnalisé.
             </p>
-            <div class="stats-badges">
+            
+            <!-- AJOUT 2 : Gros bouton d'action -->
+            <a href="tp9_dashboard/dashboard.html" class="btn-hero">Accéder aux Graphiques 📈</a>
+
+            <div class="stats-badges" style="margin-top: 30px;">
                 <span class="badge">800+ Pilotes</span>
                 <span class="badge">1000+ Courses</span>
             </div>
@@ -40,7 +84,7 @@
                 
                 <!-- Zone de Filtres -->
                 <div class="filters-box">
-                    <!-- Filtre Nationalité (Nouveau) -->
+                    <!-- Filtre Nationalité -->
                     <select id="nationalityFilter" onchange="filterTable()">
                         <option value="">🌍 Toutes les nationalités</option>
                         <!-- Rempli par JS -->
