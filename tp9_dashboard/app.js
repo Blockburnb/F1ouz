@@ -959,8 +959,8 @@ async function init(){
   function handleAuthAndSecurity() {
     // 1. Récupérer les infos de l'utilisateur (stockées lors du login)
     // On suppose que vous avez stocké 'role' et 'username' dans le localStorage
-    const role = localStorage.getItem('role'); 
-    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('userRole'); 
+    const username = localStorage.getItem('userName');
     const authBtn = document.getElementById('authBtn');
 
     // 2. Gestion du bouton Connexion/Déconnexion
