@@ -8,35 +8,46 @@
 </head>
 <body>
 
-    <div class="login-wrapper">
-        <div class="login-card">
-            <h1>F1 Dashboard</h1>
-            <p class="subtitle">Connexion à l'espace pilote</p>
+    <div class="auth-container">
+        
+        <div class="auth-visual">
+            <div class="visual-content">
+                <h2>Performance<br>Unleashed.</h2>
+                <p>Accédez aux données de télémétrie en temps réel.</p>
+            </div>
+        </div>
 
-            <form id="loginForm">
-                <div class="input-group">
-                    <label for="username">Identifiant</label>
-                    <input type="text" id="username" name="username" placeholder="Entrez votre pseudo" required>
+        <div class="auth-form-side">
+            <div class="cockpit-card">
+                <div class="cockpit-header">
+                    <h1>Pilote Login</h1>
+                    <p class="subtitle">SYSTEM :: READY_TO_CONNECT</p>
                 </div>
 
-                <div class="input-group">
-                    <label for="password">Mot de passe</label>
-                    <input type="password" id="password" name="password" placeholder="Entrez votre mot de passe" required>
-                </div>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label for="username">Identifiant Pilote</label>
+                        <input type="text" id="username" name="username" placeholder="EX: HAM44" required>
+                    </div>
 
-                <button type="submit" class="btn-login">Se connecter</button>
-            </form>
+                    <div class="input-group">
+                        <label for="password">Clé d'accès</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
 
-            <p id="error-message" class="error"></p>
-            
-            <div class="divider">ou</div>
+                    <button type="submit" class="btn-login">Démarrer le moteur</button>
+                </form>
 
-            <!-- Option Invité -->
-            <a href="index.html" class="btn-guest">Continuer en tant qu'invité</a>
+                <p id="error-message" class="error"></p>
+                
+                <div class="divider">ACCÈS RESTREINT</div>
 
-            <p class="footer-text">
-                Pas encore de compte ? <a href="register.html">S'inscrire</a>
-            </p>
+                <a href="index.html" class="btn-guest">Mode Spectateur (Invité)</a>
+
+                <p class="footer-text">
+                    Pas de licence ? <a href="register.html">Rejoindre l'écurie</a>
+                </p>
+            </div>
         </div>
     </div>
 

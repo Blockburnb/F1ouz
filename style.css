@@ -126,107 +126,210 @@ body {
 .error { color: red; min-height: 20px; font-size: 0.9rem; margin-top: 10px; }
 .footer-text { margin-top: 20px; font-size: 0.85rem; color: #666; }
 
-/* --- ACCUEIL & TABLEAU --- */
+/* --- ACCUEIL & TABLEAU (Refonte Dark Mode) --- */
+
+/* Fond global sombre pour toute la page */
+body {
+    background-color: #0b0b10;
+    color: #e0e0e0;
+}
+
+/* 1. HERO SECTION : L'Immersion Piste */
 .hero-section {
-    background: #15151e;
+    position: relative;
+    background-image: url('https://images.unsplash.com/photo-1517524008697-84bbe3c3fd98?q=80&w=2800&auto=format&fit=crop'); /* Image de piste/nuit */
+    background-size: cover;
+    background-position: center;
     color: white;
     text-align: center;
-    padding: 60px 20px;
-    border-bottom: 4px solid #e10600;
-}
-.hero-content h1 { margin: 0 0 15px 0; }
-.stats-badges .badge {
-    background: rgba(255,255,255,0.1);
-    padding: 5px 12px; border-radius: 15px; margin: 0 5px; border: 1px solid #555;
-    display: inline-block; /* Pour ne pas casser l'alignement */
+    padding: 100px 20px;
+    border-bottom: 2px solid #e10600;
+    overflow: hidden;
 }
 
-.container { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+/* Overlay sombre pour lire le texte sur l'image */
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, rgba(11,11,16,0.8), #0b0b10); /* Fondu vers le bas */
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    text-transform: uppercase;
+    font-style: italic;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(225, 6, 0, 0.5); /* Lueur rouge */
+}
+
+/* Bouton Hero style "Start Engine" */
+.btn-hero {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 15px 40px;
+    background: white;
+    color: #e10600;
+    text-decoration: none;
+    font-weight: 900;
+    text-transform: uppercase;
+    border-radius: 2px;
+    clip-path: polygon(10% 0, 100% 0, 100% 80%, 90% 100%, 0 100%, 0 20%); /* Forme angulaire futuriste */
+    transition: all 0.3s ease;
+    border: 2px solid white;
+}
+
+.btn-hero:hover {
+    background: #e10600;
+    color: white;
+    border-color: #e10600;
+    box-shadow: 0 0 30px rgba(225, 6, 0, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Badges statistiques */
+.stats-badges .badge {
+    background: rgba(0,0,0,0.6);
+    color: #ccc;
+    padding: 8px 15px;
+    border-radius: 4px;
+    margin: 0 10px;
+    border: 1px solid #333;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+/* 2. SECTION TABLEAU : Le Panneau de Télémétrie */
+.container {
+    max-width: 1200px; /* Plus large pour la data */
+    margin: -40px auto 50px; /* Chevauchement sur le Hero */
+    position: relative;
+    z-index: 3;
+    padding: 0 20px;
+}
 
 .data-table-section { 
-    background: white; 
-    padding: 20px; 
+    background: #15151e; /* Fond gris/bleu très sombre */
+    padding: 30px; 
     border-radius: 8px; 
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+    border: 1px solid #333;
+    border-top: 4px solid #e10600; /* Indicateur actif */
 }
 
-.section-header { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 20px;
-    flex-wrap: wrap; 
-    gap: 10px;
-}
-
-.search-box { position: relative; }
-.search-box input { 
-    padding: 8px 35px 8px 15px; 
-    border-radius: 20px; 
-    border: 1px solid #ccc; 
-    width: 250px; 
-}
-.search-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
-
-/* Scroll du Tableau géré en CSS (Plus propre) */
-.table-container {
-    max-height: 450px;
-    overflow-y: auto;
-    border: 1px solid #eee;
-}
-
-table { width: 100%; border-collapse: collapse; }
-
-/* En-tête Fixe (Sticky) */
-thead th {
-    position: sticky;
-    top: 0;
-    background-color: #15151e; /* Noir F1 */
+.section-header h2 {
     color: white;
-    padding: 12px;
-    text-align: left;
-    z-index: 10; /* Reste au dessus */
-    border-bottom: 3px solid #e10600;
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    border-left: 5px solid #e10600;
+    padding-left: 15px;
 }
 
-td { padding: 10px 12px; border-bottom: 1px solid #eee; }
-tr:hover { background-color: #fff5f5; }
-.wiki-link { color: #e10600; text-decoration: none; }
-
-filters-box {
+/* Filtres et Recherche Style "Cockpit" */
+.filters-box {
     display: flex;
-    gap: 15px; /* Espace entre le select et la recherche */
-    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
-/* Style du Select (Menu déroulant) */
-#nationalityFilter {
-    padding: 10px;
-    border-radius: 20px; /* Arrondi comme la barre de recherche */
-    border: 1px solid #ccc;
-    font-size: 14px;
-    background-color: white;
-    cursor: pointer;
-    min-width: 200px;
+#nationalityFilter, .search-box input {
+    background-color: #0b0b10;
+    border: 1px solid #444;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-#nationalityFilter:focus {
+#nationalityFilter:focus, .search-box input:focus {
     outline: none;
     border-color: #e10600;
+    box-shadow: 0 0 10px rgba(225, 6, 0, 0.2);
 }
 
-/* Ajustement Search Box */
-.search-box input {
-    /* Largeur un peu réduite si besoin pour tout faire tenir */
-    width: 220px; 
+.search-icon { color: #666; }
+
+/* 3. TABLEAU DATA : Style Matrix/Télémétrie */
+.table-container {
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid #222;
+    background: #0b0b10;
+    margin-top: 20px;
 }
 
-.section-header {
-    /* S'assurer que ça passe à la ligne sur mobile */
-    flex-wrap: wrap; 
+/* Scrollbar personnalisée (Chrome/Safari) */
+.table-container::-webkit-scrollbar { width: 8px; }
+.table-container::-webkit-scrollbar-track { background: #0b0b10; }
+.table-container::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+.table-container::-webkit-scrollbar-thumb:hover { background: #e10600; }
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; }
+
+thead th {
+    background-color: #1a1a20;
+    color: #888;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    padding: 15px;
+    border-bottom: 2px solid #333;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-/* ... Le reste du CSS (Tableau, Scroll) reste identique ... */
+tbody tr {
+    transition: background 0.2s;
+}
+
+tbody td {
+    padding: 15px;
+    border-bottom: 1px solid #222;
+    color: #ddd;
+    font-size: 0.95rem;
+}
+
+/* Effet de survol ligne (Scanline) */
+tbody tr:hover {
+    background-color: rgba(225, 6, 0, 0.05); /* Très légère teinte rouge */
+}
+tbody tr:hover td {
+    color: white;
+    border-bottom-color: #e10600;
+}
+
+/* Liens et Actions */
+.wiki-link {
+    color: #e10600;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.85rem;
+    border: 1px solid #e10600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.wiki-link:hover {
+    background-color: #e10600;
+    color: white;
+}
+
+/* Messages */
+#loading-msg { color: #888; font-style: italic; margin-top: 20px; text-align: center; }
+footer { text-align: center; padding: 40px; color: #555; font-size: 0.8rem; }
 
 /* --- RAPPEL CSS GLOBAL --- */
 * { box-sizing: border-box; }
@@ -248,3 +351,192 @@ tr:hover { background-color: #fff5f5; }
 .search-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
 .hero-section { background: #15151e; color: white; text-align: center; padding: 60px 20px; border-bottom: 4px solid #e10600; }
 .stats-badges .badge { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 15px; margin: 0 5px; border: 1px solid #555; display: inline-block; }
+/* --- AUTHENTIFICATION (Login & Register) --- */
+
+/* Conteneur principal en écran scindé */
+.auth-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background-color: #0b0b10; /* Fond très sombre "Cockpit" */
+    overflow: hidden;
+}
+
+/* PARTIE GAUCHE : L'IMAGERIE (Véhicule/Circuit) */
+.auth-visual {
+    flex: 1; /* Prend tout l'espace disponible */
+    background-image: url('https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=2070&auto=format&fit=crop'); /* Placeholder F1 - À remplacer par votre image */
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 60px;
+}
+
+/* Overlay pour assombrir l'image et rendre le texte lisible */
+.auth-visual::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(11,11,16,1)); /* Fondu vers le cockpit */
+}
+
+.visual-content {
+    position: relative;
+    z-index: 2;
+    color: white;
+    max-width: 600px;
+}
+
+.visual-content h2 {
+    font-size: 3rem;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+}
+
+.visual-content p {
+    font-size: 1.2rem;
+    color: #ccc;
+    border-left: 4px solid #e10600; /* Ligne rouge F1 */
+    padding-left: 20px;
+}
+
+/* PARTIE DROITE : LE COCKPIT (Formulaire) */
+.auth-form-side {
+    flex: 0 0 500px; /* Largeur fixe pour le panneau de contrôle */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px;
+    background-color: #0b0b10; /* Noir profond */
+    color: #fff;
+    border-left: 1px solid #222;
+    position: relative;
+}
+
+/* Effet "HUD" (Head-Up Display) pour le formulaire */
+.cockpit-card {
+    width: 100%;
+}
+
+.cockpit-header {
+    margin-bottom: 40px;
+}
+.cockpit-header h1 {
+    font-size: 2rem;
+    margin: 0;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+.cockpit-header .subtitle {
+    color: #666;
+    font-family: 'Courier New', monospace; /* Style technique */
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+/* Inputs stylisés "Télémétrie" */
+.input-group {
+    margin-bottom: 25px;
+    position: relative;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #888;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid #333;
+    border-left: 3px solid #333; /* Bordure gauche discrète */
+    border-radius: 4px; /* Légèrement carré */
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #555;
+    border-left-color: #e10600; /* Rouge F1 au focus */
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 15px rgba(225, 6, 0, 0.1);
+}
+
+/* Bouton Principal "Ignition" */
+.btn-login {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(45deg, #e10600, #ff0800);
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 10px;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(225, 6, 0, 0.4);
+}
+
+/* Bouton Invité style "Fil de fer" */
+.btn-guest {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 15px;
+    margin-top: 20px;
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+.btn-guest:hover {
+    border-color: white;
+    color: white;
+}
+
+.divider {
+    color: #444;
+    margin: 25px 0;
+}
+.divider::before, .divider::after {
+    background: #222;
+}
+
+.footer-text {
+    color: #555;
+    text-align: center;
+}
+.footer-text a {
+    color: #e10600;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Responsive Mobile : On cache l'image pour se concentrer sur le cockpit */
+@media (max-width: 900px) {
+    .auth-visual { display: none; }
+    .auth-form-side { flex: 1; width: 100%; border: none; }
+}

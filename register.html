@@ -8,31 +8,43 @@
 </head>
 <body>
 
-    <div class="login-wrapper">
-        <div class="login-card">
-            <h1>Créer un compte</h1>
-            <p class="subtitle">Rejoignez la communauté F1 Analytics</p>
+    <div class="auth-container">
+        
+        <div class="auth-visual" style="background-image: url('https://images.unsplash.com/photo-1535136798084-2a13b6329431?q=80&w=2070&auto=format&fit=crop');">
+            <div class="visual-content">
+                <h2>Nouvelle<br>Saison.</h2>
+                <p>Créez votre profil et suivez les statistiques du championnat.</p>
+            </div>
+        </div>
 
-            <form id="registerForm">
-                <div class="input-group">
-                    <label for="reg-username">Choisir un identifiant</label>
-                    <input type="text" id="reg-username" name="username" placeholder="Pseudo" required>
+        <div class="auth-form-side">
+            <div class="cockpit-card">
+                <div class="cockpit-header">
+                    <h1>Inscription</h1>
+                    <p class="subtitle">NEW_DRIVER :: REGISTRATION</p>
                 </div>
 
-                <div class="input-group">
-                    <label for="reg-password">Choisir un mot de passe</label>
-                    <input type="password" id="reg-password" name="password" placeholder="Mot de passe" required>
-                </div>
+                <form id="registerForm">
+                    <div class="input-group">
+                        <label for="reg-username">Nom de code (Pseudo)</label>
+                        <input type="text" id="reg-username" name="username" required>
+                    </div>
 
-                <button type="submit" class="btn-login">S'inscrire</button>
-            </form>
+                    <div class="input-group">
+                        <label for="reg-password">Mot de passe Sécurisé</label>
+                        <input type="password" id="reg-password" name="password" required>
+                    </div>
 
-            <p id="error-message" class="error"></p>
-            <p id="success-message" style="color: green; margin-top: 10px;"></p>
-            
-            <p class="footer-text">
-                Déjà un compte ? <a href="login.html">Se connecter</a>
-            </p>
+                    <button type="submit" class="btn-login">Valider l'inscription</button>
+                </form>
+
+                <p id="error-message" class="error"></p>
+                <p id="success-message" style="color: #00ff00; margin-top: 10px; font-family: monospace;"></p>
+                
+                <p class="footer-text">
+                    Déjà sur la grille ? <a href="login.html">Retour aux stands</a>
+                </p>
+            </div>
         </div>
     </div>
 
