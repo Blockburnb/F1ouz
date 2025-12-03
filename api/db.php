@@ -1,9 +1,9 @@
 <?php
 // api/db.php
-$host = 'localhost';
+$host = 'mysql';
 $db   = 'f1_project';
 $user = 'root';
-$pass = ''; //Pas de mdp par défaut
+$pass = 'f1_pass'; //Pas de mdp par défaut
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";

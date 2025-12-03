@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  # Service 1 : La Base de données (MySQL)
+  mysql:
+    image: mysql:8.0
+    container_name: f1_db_container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: f1_pass
+      MYSQL_DATABASE: f1_project
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
+
+  # Service 2 : Le Site Web (PHP/Apache)
+  web:
+    build: .
+    container_name: f1_web_container
+    ports:
+      - "80:80"
+    volumes:
+      # On lie le dossier courant (.) au dossier du serveur web
+      - .:/var/www/html
+    depends_on:
+      - mysql
+
+volumes:
+  db_data:
