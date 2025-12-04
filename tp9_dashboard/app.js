@@ -420,13 +420,6 @@ async function init(){
         return null;
       }
 
-      // try by driver number
-      if(driverNumber && String(driverNumber) !== '' && String(driverNumber) !== "\\N"){
-        const url = `https://api.openf1.org/v1/drivers?driver_number=${encodeURIComponent(driverNumber)}&session_key=latest`;
-        const res = await fetchFromApi(url);
-        if(res){ if(cacheKey) { persistentCache[cacheKey]=res; try{ localStorage.setItem(persistentCacheKey, JSON.stringify(persistentCache)); }catch(e){} } return res; }
-      }
-
       // try by full name
       if(driverName){
         const url = `https://api.openf1.org/v1/drivers?full_name=${encodeURIComponent(driverName)}&session_key=latest`;
@@ -436,17 +429,29 @@ async function init(){
 
       // fallback heuristics for static image URLs
       const candidates = [];
-      if(driverId) {
-        candidates.push(`https://api.openf1.io/drivers/${driverId}/image`);
-        candidates.push(`https://openf1.io/images/drivers/${driverId}.jpg`);
-        candidates.push(`https://openf1.io/images/drivers/${driverId}.png`);
-        candidates.push(`https://cdn.openf1.io/drivers/${driverId}.jpg`);
-      }
+      
+      // 1. PRIORITÉ : Chercher par driverRef (ex: 'button', 'hamilton')
+      // C'est beaucoup plus fiable que l'ID numérique
       if(driverRef){
-        candidates.push(`https://openf1.io/drivers/${driverRef}.jpg`);
-        candidates.push(`https://openf1.io/drivers/${driverRef}.png`);
-        candidates.push(`https://api.openf1.io/drivers/by-ref/${driverRef}/image`);
+        // Nettoyer le driverRef (minuscule, sans espaces) au cas où
+        const ref = String(driverRef).toLowerCase().trim();
+        
+        candidates.push(`https://openf1.io/drivers/${ref}.jpg`);
+        candidates.push(`https://openf1.io/drivers/${ref}.png`);
+        candidates.push(`https://api.openf1.io/drivers/by-ref/${ref}/image`);
+        
+        // Ajout d'autres sources courantes basées sur le nom si besoin
+        candidates.push(`https://media.formula1.com/content/dam/fom-website/drivers/${ref}.jpg`);
       }
+
+      // 2. DERNIER RECOURS : Chercher par driverId
+      // ATTENTION : Je vous conseille même de commenter ce bloc si les erreurs persistent,
+      // car vos IDs locaux ne correspondent pas aux IDs de l'API externe.
+      //if(driverId) {
+        // candidates.push(`https://api.openf1.io/drivers/${driverId}/image`); 
+        // candidates.push(`https://openf1.io/images/drivers/${driverId}.jpg`);
+        // candidates.push(`https://cdn.openf1.io/drivers/${driverId}.jpg`);
+      //}
 
       for(const url of candidates){
         try{

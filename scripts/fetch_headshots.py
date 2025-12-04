@@ -78,13 +78,7 @@ for row in rows:
         continue
     print(f"Fetching for driverId={driverId}, number={number}, name='{full_name}'")
     headshot_url = None
-    # try by number if present
-    if number and number != "\\N":
-        params = {'driver_number': number, 'session_key': 'latest'}
-        j = fetch_json(API_BASE, params=params)
-        if isinstance(j, list) and j:
-            item = j[0]
-            headshot_url = item.get('headshot_url')
+    
     # try by full name
     if not headshot_url and full_name:
         params = {'full_name': full_name, 'session_key': 'latest'}
