@@ -932,7 +932,7 @@ async function init(){
     // 1. Récupérer les infos de l'utilisateur (stockées lors du login)
     // On suppose que vous avez stocké 'role' et 'username' dans le localStorage
     const role = localStorage.getItem('userRole'); 
-    const username = localStorage.getItem('userame');
+    const username = localStorage.getItem('userName');
     const authBtn = document.getElementById('authBtn');
 
     // 2. Gestion du bouton Connexion/Déconnexion
