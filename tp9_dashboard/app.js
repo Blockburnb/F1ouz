@@ -10,6 +10,7 @@ async function loadCsv(name){
 }
 
 async function init(){
+  
   // --- DÉBUT BLOC À COLLER ---
   const startLights = (function(){
     let overlay = null, lights = [], goText = null, cycleTimer = null, loadedFlag = false;
@@ -309,9 +310,9 @@ async function init(){
     const w = Math.max(50, width - margin.left - margin.right);
     const h = Math.max(50, height - margin.top - margin.bottom);
 
-    // group used for axes (keeps axis coordinates simple)
     const g = svg.append('g').attr('transform',`translate(${margin.left},${margin.top})`);
 
+    // On ne prend que les 'top' pilotes qui seront affichés
     const plot = data.slice(0, top).filter(d=>d[yKey]!=null && d[xKey]!=null);
     if(plot.length===0) return;
 
@@ -319,12 +320,11 @@ async function init(){
     const y = d3.scaleLinear().domain([d3.max(plot,d=>+d[yKey]), d3.min(plot,d=>+d[yKey])]).range([h,0]).nice();
     const r = d3.scaleSqrt().domain([d3.min(plot,d=>+d[rKey]), d3.max(plot,d=>+d[rKey])]).range([6,28]);
 
-    // axes
+    // Axes
     g.append('g').attr('transform',`translate(0,${h})`).call(d3.axisBottom(x)).selectAll('text').style('fill', muted);
     g.append('g').call(d3.axisLeft(y)).selectAll('text').style('fill', muted);
 
-    // color scale
-    // color scale: when a team colour is active, use shades of the team colour
+    // Couleurs
     let color;
     if(state && (state.driverId || state.constructorId)){
       const computed = window.getComputedStyle(document.documentElement);
@@ -338,252 +338,162 @@ async function init(){
       color = d3.scaleOrdinal().domain(plot.map(d=>d[labelKey])).range(palette);
     }
 
-    // defs for clipPaths
     const defs = svg.append('defs');
 
-    // simple in-memory cache for avatar fetch results
-    const avatarCache = {};
+    // --- NOUVEAU : GESTION WIKIPEDIA / WIKIDATA ---
+    
+    // 1. Fonction pour extraire le titre de l'article depuis l'URL (ex: "Lewis_Hamilton")
+    const getWikiTitle = (driverId) => {
+        const dRow = drivers.find(d => String(d.driverId) === String(driverId));
+        if (!dRow || !dRow.url) return null;
+        // L'URL est souvent http://en.wikipedia.org/wiki/Nom_Du_Pilote
+        const parts = dRow.url.split('/wiki/');
+        return parts.length > 1 ? parts[1] : null;
+    };
 
-    // persistent cache across reloads (localStorage) to avoid repeated fetch attempts
-    const persistentCacheKey = 'f1_headshot_cache_v1';
-    let persistentCache = {};
-    try{ persistentCache = JSON.parse(localStorage.getItem(persistentCacheKey) || '{}'); } catch(e){ persistentCache = {}; }
+    // 2. Cache persistant pour les images Wiki
+    const WIKI_CACHE_KEY = 'f1_wiki_images_v1';
+    let wikiCache = {};
+    try { wikiCache = JSON.parse(localStorage.getItem(WIKI_CACHE_KEY) || '{}'); } catch(e){}
 
-    // helper: apply team color to dashboard theme (updates CSS var and palette[0])
-    function applyTeamColour(teamColour){
-      if(!teamColour) return;
-      let hex = String(teamColour).replace('#','').trim();
-      if(!/^[0-9a-fA-F]{6}$/.test(hex)) return; // ignore invalid
-      hex = '#'+hex.toLowerCase();
-      try{ document.documentElement.style.setProperty('--accent', hex); } catch(e){}
-      // update in-memory palette first color so charts pick it up on next draw
-      try{ palette[0] = hex; } catch(e){}
-      // trigger a re-render so charts pick up the new colour immediately
-      try{ setTimeout(()=>{ if(typeof updateAll === 'function') updateAll(); }, 0); } catch(e){}
-    }
-
-    // function to request local headshot server to fetch and save headshot
-    async function requestLocalServerFetch(driverId){
-      try{
-        const url = `http://localhost:8001/fetch_headshot?driverId=${encodeURIComponent(driverId)}`;
-        const resp = await fetch(url);
-        if(!resp.ok) return false;
-        const j = await resp.json();
-        return j.status === 'saved' || j.status === 'exists';
-      } catch(e){ return false; }
-    }
-
-    // resolve a headshot url by checking local files under data/headshots/<driverId> first
-    async function resolveHeadshotLocal(driverId){
-      if(!driverId) return null;
-      const base = dataPath + 'headshots/' + driverId;
-      const candidates = [base + '.jpg', base + '.png', base + '.jpeg', base + '.webp'];
-      for(const url of candidates){
-        try{
-          // try HEAD first
-          const r = await fetch(url, {method:'HEAD'});
-          if(r.ok) return url;
-        } catch(e){ /* ignore */ }
-      }
-      // if not found, ask local server to fetch it (best-effort)
-      const tried = await requestLocalServerFetch(driverId);
-      if(tried){
-        // small delay to allow file to be written by server
-        await new Promise(res=>setTimeout(res, 350));
-        for(const url of candidates){
-          try{ const r = await fetch(url, {method:'HEAD'}); if(r.ok) return url; } catch(e){}
-        }
-      }
-      return null;
-    }
-
-    // fetch driver metadata (headshot url + team colour) from OpenF1 API or fallbacks
-    async function tryFetchOpenF1Image(driverId, driverRef, driverNumber, driverName){
-      const cacheKey = driverId || driverRef || driverName || null;
-      // return from persistent cache if present (could be null for negative)
-      if(cacheKey && persistentCache[cacheKey] !== undefined){
-        return persistentCache[cacheKey]; // object or null
-      }
-
-      async function fetchFromApi(queryUrl){
-        try{
-          const resp = await fetch(queryUrl, {mode: 'cors'});
-          if(!resp.ok) return null;
-          const data = await resp.json();
-          if(Array.isArray(data) && data.length){
-            const item = data[0];
-            if(item){
-              return { url: item.headshot_url || null, teamColour: item.team_colour || null };
+    // 3. Fonction de chargement en lot (Batch) optimisée
+    async function fetchWikiImagesBatch(plotData) {
+        // Identifier les titres manquants (non présents dans le cache)
+        const missingMap = {}; // Map: Title -> [driverIds...]
+        
+        plotData.forEach(d => {
+            const title = getWikiTitle(d.id);
+            if(title && !wikiCache[title]) {
+                if(!missingMap[title]) missingMap[title] = [];
+                missingMap[title].push(d.id);
             }
-          }
-        } catch(e){ /* ignore */ }
-        return null;
-      }
+        });
 
-      // try by full name
-      if(driverName){
-        const url = `https://api.openf1.org/v1/drivers?full_name=${encodeURIComponent(driverName)}&session_key=latest`;
-        const res = await fetchFromApi(url);
-        if(res){ if(cacheKey) { persistentCache[cacheKey]=res; try{ localStorage.setItem(persistentCacheKey, JSON.stringify(persistentCache)); }catch(e){} } return res; }
-      }
+        const titlesToFetch = Object.keys(missingMap);
+        if(titlesToFetch.length === 0) return; // Tout est déjà en cache !
 
-      // fallback heuristics for static image URLs
-      const candidates = [];
-      
-      // 1. PRIORITÉ : Chercher par driverRef (ex: 'button', 'hamilton')
-      // C'est beaucoup plus fiable que l'ID numérique
-      if(driverRef){
-        // Nettoyer le driverRef (minuscule, sans espaces) au cas où
-        const ref = String(driverRef).toLowerCase().trim();
-        
-        candidates.push(`https://openf1.io/drivers/${ref}.jpg`);
-        candidates.push(`https://openf1.io/drivers/${ref}.png`);
-        candidates.push(`https://api.openf1.io/drivers/by-ref/${ref}/image`);
-        
-        // Ajout d'autres sources courantes basées sur le nom si besoin
-        candidates.push(`https://media.formula1.com/content/dam/fom-website/drivers/${ref}.jpg`);
-      }
+        console.log(`Récupération de ${titlesToFetch.length} images depuis Wikipedia...`);
 
-      // 2. DERNIER RECOURS : Chercher par driverId
-      // ATTENTION : Je vous conseille même de commenter ce bloc si les erreurs persistent,
-      // car vos IDs locaux ne correspondent pas aux IDs de l'API externe.
-      //if(driverId) {
-        // candidates.push(`https://api.openf1.io/drivers/${driverId}/image`); 
-        // candidates.push(`https://openf1.io/images/drivers/${driverId}.jpg`);
-        // candidates.push(`https://cdn.openf1.io/drivers/${driverId}.jpg`);
-      //}
+        // L'API Wikipedia accepte jusqu'à 50 titres par requête
+        const chunkSize = 50;
+        for (let i = 0; i < titlesToFetch.length; i += chunkSize) {
+            const chunk = titlesToFetch.slice(i, i + chunkSize);
+            // API "Query PageImages" : Très rapide et légère
+            const apiEndpoint = `https://en.wikipedia.org/w/api.php?action=query&titles=${chunk.join('|')}&prop=pageimages&pithumbsize=100&format=json&origin=*`;
 
-      for(const url of candidates){
-        try{
-          const resp = await fetch(url, {mode: 'cors'});
-          if(!resp.ok) continue;
-          const ct = resp.headers.get('content-type') || '';
-          if(!ct.startsWith('image/')) continue;
-          const obj = { url, teamColour: null };
-          if(cacheKey){ persistentCache[cacheKey] = obj; try{ localStorage.setItem(persistentCacheKey, JSON.stringify(persistentCache)); }catch(e){} }
-          return obj;
-        } catch(e){ /* ignore */ }
-      }
+            try {
+                const res = await fetch(apiEndpoint);
+                const json = await res.json();
+                if(json && json.query && json.query.pages) {
+                    Object.values(json.query.pages).forEach(page => {
+                        // Si une image existe
+                        if(page.thumbnail && page.thumbnail.source) {
+                            const imgUrl = page.thumbnail.source;
+                            // Mise à jour du cache
+                            // Le titre renvoyé peut avoir des espaces au lieu de _, on normalise
+                            const cleanTitle = page.title.replace(/ /g, '_');
+                            // On essaye de matcher avec notre map (qui utilise les titres de l'URL)
+                            // Note: Wikipedia normalise parfois les titres, c'est une approximation
+                            // On sauve pour le titre original demandé si possible
+                            const originalTitle = chunk.find(t => t.replace(/_/g, ' ') === page.title) || cleanTitle;
+                            
+                            wikiCache[originalTitle] = imgUrl;
 
-      // negative cache
-      if(cacheKey){ persistentCache[cacheKey] = null; try{ localStorage.setItem(persistentCacheKey, JSON.stringify(persistentCache)); }catch(e){} }
-      return null;
+                            // Mise à jour immédiate du DOM
+                            if(missingMap[originalTitle]) {
+                                missingMap[originalTitle].forEach(dId => {
+                                    updateBubbleImage(dId, imgUrl);
+                                });
+                            }
+                        }
+                    });
+                }
+            } catch(e) { console.error("Wiki Fetch Error", e); }
+        }
+        // Sauvegarde du cache
+        localStorage.setItem(WIKI_CACHE_KEY, JSON.stringify(wikiCache));
     }
 
-    // helper to unwrap a cached meta (string or object) into a url string
-    function metaToUrl(m){
-      if(!m) return null;
-      if(typeof m === 'string') return m;
-      if(typeof m === 'object' && m.url) return m.url;
-      return null;
+    // Fonction pour mettre à jour une bulle spécifique
+    function updateBubbleImage(driverId, url) {
+        // Sélectionner l'image par son ID unique
+        const imgParams = d3.select(`#bubble-img-${driverId}`);
+        const bgParams = d3.select(`#bubble-bg-${driverId}`);
+        
+        if(!imgParams.empty() && url) {
+            imgParams.attr('href', url);
+            // Rendre le fond transparent pour voir l'image proprement
+            if(bgParams) bgParams.attr('fill', 'none'); 
+        }
     }
 
-    // compute absolute positions and create clipped avatar images
-    for(let i=0;i<plot.length;i++){
+    // --- FIN LOGIQUE NOUVELLE ---
+
+    // Rendu des bulles
+    for(let i=0; i<plot.length; i++){
       const d = plot[i];
       const cx = margin.left + x(+d[xKey]);
       const cy = margin.top + y(+d[yKey]);
       const rp = Math.max(3, Math.round(r(+d[rKey])));
       const clipId = `avatar-clip-${i}`;
-      // create clipPath in userSpaceOnUse so we can use absolute coords
+
       defs.append('clipPath').attr('id', clipId).attr('clipPathUnits', 'userSpaceOnUse')
         .append('circle').attr('cx', cx).attr('cy', cy).attr('r', rp);
 
-      // group all bubble elements so we can bring the whole bubble to front on hover
       const bubbleG = svg.append('g').attr('class', 'bubble').style('pointer-events', 'auto');
 
-      // draw background immediately (will be made transparent later if headshot found)
-      const bgCircle = bubbleG.append('circle')
+      // Cercle de fond (couleur) - ID ajouté pour modification
+      bubbleG.append('circle')
+        .attr('id', `bubble-bg-${d.id}`)
         .attr('cx', cx).attr('cy', cy).attr('r', rp)
         .attr('fill', color(d[labelKey]))
         .attr('opacity', 0.95);
 
-      // prepare initials for generated avatar
+      // Initiales (Fallback)
       const name = String(d[labelKey] || '');
-      const parts = name.split(/\s+/).filter(Boolean);
-      let initials = parts.length ? parts.map(p=>p[0]).slice(0,2).join('') : name.slice(0,2);
-      initials = initials.toUpperCase();
+      const initials = (name.split(/\s+/).map(p=>p[0]).slice(0,2).join('')).toUpperCase();
+      const txtColor = d3.hsl(color(d[labelKey])).l < 0.6 ? '#fff' : '#000'; // Contraste simple
 
-      // contrasting text color for avatar label
-      const c = d3.color(color(d[labelKey])) || d3.color('#000');
-      const lum = (c.r * 0.299 + c.g * 0.587 + c.b * 0.114);
-      const txtColor = lum < 140 ? '#ffffff' : '#111';
-
-      // generate SVG avatar as data URL (initials fallback)
+      // Image SVG par défaut (Initiales)
       const svgAvatar = `<?xml version="1.0" encoding="UTF-8"?>` +
         `<svg xmlns='http://www.w3.org/2000/svg' width='${rp*2}' height='${rp*2}' viewBox='0 0 ${rp*2} ${rp*2}'>` +
-        `<rect width='100%' height='100%' fill='${color(d[labelKey])}' />` +
-        `<text x='50%' y='50%' font-family='Segoe UI, Tahoma, Geneva, Verdana, sans-serif' font-size='${Math.max(10, Math.round(rp*0.9))}' fill='${txtColor}' dominant-baseline='middle' text-anchor='middle'>${initials}</text></svg>`;
+        `<text x='50%' y='50%' font-family='sans-serif' font-weight='bold' font-size='${Math.max(8, Math.round(rp*0.8))}' fill='${txtColor}' dominant-baseline='middle' text-anchor='middle'>${initials}</text></svg>`;
       const dataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgAvatar);
 
-      // append image and clip it (start with initials)
-      const img = bubbleG.append('image')
+      // L'élément IMAGE
+      bubbleG.append('image')
+        .attr('id', `bubble-img-${d.id}`) // ID pour l'update async
         .attr('href', dataUrl)
         .attr('x', cx - rp).attr('y', cy - rp).attr('width', rp*2).attr('height', rp*2)
         .attr('clip-path', `url(#${clipId})`)
         .style('cursor', 'pointer')
+        // Tooltip events
         .on('mouseenter', function(event){
-          // bring this bubble (group) to front so it's not hidden by others
-          try{ bubbleG.raise(); } catch(e){}
-          const txt = `${d[labelKey]}\nCount: ${d[xKey]}\nBest: ${d[yKey]} ms`;
-          tooltip.style('display','block').html(txt.replace(/\n/g,'<br/>'));
+            d3.select(this.parentNode).raise(); // Mettre au premier plan
+            const txt = `<strong>${d[labelKey]}</strong><br/>Stops: ${d[xKey]}<br/>Best: ${d[yKey]} ms`;
+            tooltip.style('display','block').html(txt);
         })
-        .on('mousemove', function(event){ tooltip.style('left', (event.clientX+12)+'px').style('top', (event.clientY+12)+'px'); })
-        .on('mouseleave', function(){ tooltip.style('display','none'); });
+        .on('mousemove', e => tooltip.style('left', (e.clientX+15)+'px').style('top', (e.clientY+15)+'px'))
+        .on('mouseleave', () => tooltip.style('display','none'));
 
-      // add a subtle border (contour de bulle) above the image
+      // Contour
       bubbleG.append('circle')
         .attr('cx', cx).attr('cy', cy).attr('r', rp)
-        .attr('fill', 'none')
-        .attr('stroke', '#000')
-        .attr('stroke-width', Math.max(1, Math.round(rp*0.08)));
+        .attr('fill', 'none').attr('stroke', '#333').attr('stroke-width', 1);
 
-      // check for local headshot asynchronously; if found replace image and make bg transparent
-      resolveHeadshotLocal(d.id).then(localHead => {
-        if(localHead){
-          try{ img.attr('href', localHead); bgCircle.attr('fill','none'); } catch(e){}
-        }
-      }).catch(()=>{});
-
-      // asynchronously try to fetch real driver photo via OpenF1 and replace if found (non-blocking)
-      (async ()=>{
-        try{
-          const id = d.id || null;
-          // try to find driverRef from drivers dataset (available in outer scope)
-          const drvRow = id ? find(drivers, 'driverId', id) : null;
-          const driverRef = drvRow ? (drvRow.driverRef || drvRow.code || drvRow.url || null) : null;
-          const cacheKey = id || driverRef || name;
-          if(avatarCache[cacheKey]){
-            // previously resolved: either string URL or object {url, teamColour}
-            const cached = avatarCache[cacheKey];
-            const cachedUrl = metaToUrl(cached);
-            if(cachedUrl){ img.attr('href', cachedUrl); try{ if(String(cachedUrl || '').startsWith(dataPath+'headshots/')) bgCircle.attr('fill','none'); } catch(e){} }
-            // if cached team colour and this pilot is the selected one, apply theme
-            const tc = (typeof cached === 'object' && cached && cached.teamColour) ? cached.teamColour : null;
-            if(tc && state.driverId && String(state.driverId)===String(id)) applyTeamColour(tc);
-            return;
-          }
-
-          const meta = await tryFetchOpenF1Image(id, driverRef, drvRow ? drvRow.number : null, name);
-          if(meta && meta.url){
-            avatarCache[cacheKey] = meta;
-            const murl = metaToUrl(meta);
-            if(murl) img.attr('href', murl);
-            try{ if(String(murl).startsWith(dataPath+'headshots/')) bgCircle.attr('fill','none'); } catch(e){}
-            if(meta.teamColour && state.driverId && String(state.driverId)===String(id)) applyTeamColour(meta.teamColour);
-          } else {
-            // mark negative cache to avoid re-trying repeatedly
-            avatarCache[cacheKey] = null;
-          }
-        } catch(e){
-          // ignore errors and keep initials
-        }
-      })();
+      // Check immédiat du cache pour afficher l'image si on l'a déjà
+      const title = getWikiTitle(d.id);
+      if(title && wikiCache[title]) {
+          updateBubbleImage(d.id, wikiCache[title]);
+      }
     }
 
-    // axis labels (kept as before)
+    // Axes labels
     svg.append('text').attr('x', margin.left + w/2).attr('y', height-4).attr('text-anchor','middle').text('Nombre de pitstops (observés)').style('fill', muted);
     svg.append('text').attr('transform', 'rotate(-90)').attr('x', - (margin.top + h/2)).attr('y', 12).attr('text-anchor','middle').text('Meilleur pit (ms)').style('fill', muted);
+
+    // Lancer le chargement asynchrone pour ceux qui manquent
+    fetchWikiImagesBatch(plot);
   }
 
   // compute aggregated data according to state.mode and optional circuit filter
