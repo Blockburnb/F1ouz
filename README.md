@@ -22,3 +22,12 @@ les pitstop les plus rapide par pilote/écuries
 
 Capture de la base pour bien vérifier le hashage
 >>>>>>> Stashed changes
+
+
+
+
+pour lancer :
+clone le repo
+ouvrir docker
+faire docker compose up --build dans un terminal dans le projet
+ouvrir http://localhost
