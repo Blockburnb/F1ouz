@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Telemetry // L.Hamilton</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="dashboard_new.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+
+    <div class="dashboard-wrapper">
+        
+        <header class="top-bar">
+            <div class="logo-zone">
+                <span class="logo-icon">🏎️</span>
+                <span class="logo-text">F1 ANALYTICS <span class="highlight">PRO</span></span>
+            </div>
+            <div class="status-bar">
+                <div class="status-item"><span class="dot active"></span> SYSTEM ONLINE</div>
+                <div class="status-item" id="last-update">DATA: LOADING...</div>
+                <a href="../index.html" class="btn-exit">EXIT TERMINAL</a>
+            </div>
+        </header>
+
+        <main class="main-grid">
+            
+            <aside class="left-panel">
+                <div class="panel-header">DRIVER_PROFILE</div>
+                
+                <div class="driver-card">
+                    <div class="driver-number">44</div>
+                    <h1 class="driver-name">LEWIS<br><span class="surname">HAMILTON</span></h1>
+                    <div class="driver-team" id="driver-team">MERCEDES AMG F1</div>
+                    <div class="driver-nation"><img src="https://flagcdn.com/gb.svg" width="30" alt="UK"> GBR</div>
+                </div>
+
+                <div class="panel-divider"></div>
+
+                <div class="kpi-group">
+                    <div class="kpi-box">
+                        <div class="kpi-label">SAISON</div>
+                        <div class="kpi-value big" id="season-year">--</div>
+                    </div>
+                    <div class="kpi-box">
+                        <div class="kpi-label">POSITION FINAL</div>
+                        <div class="kpi-value big text-blue" id="season-rank">--</div>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="center-panel">
+                <div class="car-visual-container">
+                    <img src="https://media.formula1.com/image/upload/v1708096983/f1/cars/2024/Mercedes.png" alt="F1 Car Top View" class="car-img">
+                    
+                    <div class="hud-circle c-1"></div>
+                    <div class="hud-circle c-2"></div>
+                    <div class="hud-line l-1"></div>
+                    <div class="hud-line l-2"></div>
+                </div>
+
+                <div class="main-stat-box">
+                    <div class="stat-label">TOTAL POINTS (SEASON)</div>
+                    <div class="stat-value-huge" id="total-points">000</div>
+                </div>
+            </section>
+
+            <aside class="right-panel">
+                <div class="panel-header">PERFORMANCE_TELEMETRY</div>
+
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-head">
+                            <span>VICTOIRES</span>
+                            <span class="val" id="wins-count">0</span>
+                        </div>
+                        <div class="progress-bar"><div class="fill" id="wins-bar" style="width: 0%"></div></div>
+                    </div>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-head">
+                            <span>PODIUMS</span>
+                            <span class="val" id="podiums-count">0</span>
+                        </div>
+                        <div class="progress-bar"><div class="fill" id="podiums-bar" style="width: 0%"></div></div>
+                    </div>
+                </div>
+
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-head">
+                            <span>COURSES TERMINÉES</span>
+                            <span class="val" id="finished-count">0</span>
+                        </div>
+                        <div class="progress-bar"><div class="fill" id="finished-bar" style="width: 0%"></div></div>
+                    </div>
+                </div>
+
+                <div class="panel-divider"></div>
+
+                <div class="tech-data-grid">
+                    <div class="tech-box">
+                        <span class="icon">🏁</span>
+                        <span class="label">GP DISPUTÉS</span>
+                        <span class="value" id="races-count">0</span>
+                    </div>
+                    <div class="tech-box">
+                        <span class="icon">⏱️</span>
+                        <span class="label">MEILLEUR POS.</span>
+                        <span class="value" id="best-pos">--</span>
+                    </div>
+                    <div class="tech-box">
+                        <span class="icon">⚠️</span>
+                        <span class="label">ABANDONS</span>
+                        <span class="value" id="dnf-count">0</span>
+                    </div>
+                    <div class="tech-box">
+                        <span class="icon">📊</span>
+                        <span class="label">MOY. POINTS/GP</span>
+                        <span class="value" id="avg-points">0.0</span>
+                    </div>
+                </div>
+
+            </aside>
+        </main>
+
+    </div>
+
+    <script src="dashboard_new.js"></script>
+</body>
+</html>
