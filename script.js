@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('userName', data.username);
 
                     // 2. MODIFICATION ICI : Redirection vers index.html
-                    window.location.href = 'tp9_dashboard/dashboard.html'; 
+                    window.location.href = 'dashboard/dashboard.html'; 
                 } else {
                     errorMsg.innerText = data.message || "Erreur de connexion";
                 }

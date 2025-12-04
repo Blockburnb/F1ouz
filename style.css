@@ -379,7 +379,8 @@ tr:hover { background-color: #fff5f5; }
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(11,11,16,1)); /* Fondu vers le cockpit */
+    /* Sombre à gauche, clair (transparent) à droite */
+    background: linear-gradient(to right, rgba(11,11,16,0.9), rgba(11,11,16,0));
 }
 
 .visual-content {
@@ -539,4 +540,14 @@ tr:hover { background-color: #fff5f5; }
 @media (max-width: 900px) {
     .auth-visual { display: none; }
     .auth-form-side { flex: 1; width: 100%; border: none; }
+}
+
+/* PARTIE AUTH - allow reversing the two panels when needed (e.g. register page)
+   Usage: add class `reverse` to `.auth-container` in the HTML */
+.auth-container.reverse { 
+    flex-direction: row-reverse; /* swap visual and form side */
+}
+.auth-container.reverse .auth-form-side {
+    border-left: none;
+    border-right: 1px solid #222; /* keep the subtle divider on the correct side */
 }
