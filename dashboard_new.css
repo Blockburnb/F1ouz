@@ -1,0 +1,279 @@
+/* --- VARIABLES & RESET --- */
+:root {
+    --bg-color: #1a1e23; /* Dark Slate Grey (base) */
+    --bg-dark: #121418;  /* Plus sombre pour les panneaux */
+    --text-primary: #ffffff;
+    --text-secondary: #8892b0;
+    --accent-blue: #3498db; /* Bleu Céruléen */
+    --accent-cyan: #00f3ff; /* Bleu Électrique */
+    --accent-red: #e10600;  /* Rappel F1 subtil */
+    --border-color: rgba(52, 152, 219, 0.3);
+    
+    --font-display: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    height: 100vh;
+    overflow: hidden; /* Dashboard fixe */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Fond quadrillé subtil */
+.bg-grid {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: -1;
+}
+
+.dashboard-wrapper {
+    width: 95vw;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- HEADER --- */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background: var(--bg-dark);
+    border-bottom: 2px solid var(--accent-blue);
+    clip-path: polygon(0 0, 100% 0, 100% 80%, 98% 100%, 0 100%);
+}
+
+.logo-text {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+}
+.logo-text .highlight { color: var(--accent-blue); }
+
+.status-bar {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+}
+
+.dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: #333;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+.dot.active { background: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan); }
+
+.btn-exit {
+    color: var(--text-secondary);
+    text-decoration: none;
+    border: 1px solid var(--text-secondary);
+    padding: 2px 10px;
+    border-radius: 2px;
+    font-size: 0.8rem;
+    transition: 0.3s;
+}
+.btn-exit:hover { color: white; border-color: var(--accent-red); background: rgba(225,6,0,0.1); }
+
+/* --- MAIN GRID LAYOUT --- */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr; /* Colonnes latérales plus petites */
+    gap: 20px;
+    flex: 1;
+}
+
+/* Panneaux Généraux */
+aside, section {
+    background: rgba(18, 20, 24, 0.8); /* Semi-transparent */
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 4px;
+    position: relative;
+}
+
+.panel-header {
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    color: var(--accent-blue);
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 5px;
+}
+
+.panel-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+    margin: 20px 0;
+}
+
+/* --- GAUCHE : DRIVER PROFILE --- */
+.driver-card { text-align: center; }
+
+.driver-number {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    font-weight: 900;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--text-secondary);
+    opacity: 0.5;
+    line-height: 0.8;
+}
+
+.driver-name {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    line-height: 1.1;
+    margin: 10px 0;
+    text-transform: uppercase;
+}
+.driver-name .surname {
+    color: var(--accent-blue);
+    font-size: 2.2rem;
+    display: block;
+    text-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+}
+
+.driver-team {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+}
+
+.kpi-group {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    margin-top: 30px;
+}
+
+.kpi-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+.kpi-value.big {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+}
+.text-blue { color: var(--accent-cyan); }
+
+
+/* --- CENTRE : VOITURE 3D --- */
+.center-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: none; /* Pas de bordure pour le centre, plus aérien */
+    background: transparent;
+}
+
+.car-visual-container {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.car-img {
+    width: 100%;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+    z-index: 2;
+    transform: rotate(-90deg); /* Si l'image est horizontale, on la met verticale */
+}
+
+/* HUD Elements décoratifs */
+.hud-circle {
+    position: absolute;
+    border: 1px dashed var(--accent-cyan);
+    border-radius: 50%;
+    opacity: 0.3;
+    animation: rotate 20s linear infinite;
+}
+.c-1 { width: 300px; height: 300px; }
+.c-2 { width: 450px; height: 450px; border-style: solid; border-width: 1px; }
+
+@keyframes rotate { 100% { transform: rotate(360deg); } }
+
+.main-stat-box {
+    margin-top: 40px;
+    text-align: center;
+    z-index: 3;
+}
+.stat-value-huge {
+    font-family: var(--font-display);
+    font-size: 5rem;
+    color: white;
+    text-shadow: 0 0 20px var(--accent-blue);
+    line-height: 1;
+}
+
+/* --- DROITE : STATS --- */
+.stat-row { margin-bottom: 20px; }
+.stat-head {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+.stat-head .val { color: var(--accent-cyan); font-family: var(--font-display); }
+
+.progress-bar {
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    overflow: hidden;
+}
+.progress-bar .fill {
+    height: 100%;
+    background: var(--accent-blue);
+    box-shadow: 0 0 10px var(--accent-blue);
+    width: 0; /* Animé en JS */
+    transition: width 1s ease-out;
+}
+
+.tech-data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.tech-box {
+    background: rgba(255,255,255,0.05);
+    padding: 10px;
+    border-left: 3px solid var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+}
+.tech-box .label { font-size: 0.7rem; color: #aaa; margin-top: 5px;}
+.tech-box .value { font-size: 1.2rem; font-weight: bold; font-family: var(--font-display); }
+.tech-box .icon { font-size: 1.2rem; margin-bottom: 5px; }
+
+/* --- RESPONSIVE --- */
+@media (max-width: 1024px) {
+    .main-grid { grid-template-columns: 1fr; overflow-y: auto; }
+    body { overflow: auto; height: auto; padding: 20px 0; }
+    .dashboard-wrapper { height: auto; }
+    .car-visual-container { transform: scale(0.8); }
+}
