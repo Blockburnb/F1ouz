@@ -24,6 +24,15 @@ async function initDashboard() {
         const driver = drivers.find(d => d.driverId == TARGET_DRIVER_ID);
         if (!driver) throw new Error("Pilote introuvable");
         console.log("Pilote:", driver.forename, driver.surname);
+        
+        // --- NOUVEAU: Récupération et application de l'image du pilote via API ---
+        // 'driver.url' contient l'URL Wikipedia complète (ex: https://en.wikipedia.org/wiki/Lewis_Hamilton)
+        if (driver.url) {
+            // On attend la réponse de l'API pour avoir l'URL de l'image
+            const imageUrl = await fetchDriverImageUrl(driver.url);
+            // On met à jour le CSS
+            updateDriverImage(imageUrl);
+        }
 
         // 3. Trouver la dernière saison active du pilote
         // On filtre les résultats pour ce pilote
@@ -154,3 +163,71 @@ function animateValue(id, start, end, duration) {
     };
     window.requestAnimationFrame(step);
 }
+// F1ouz/dashboard_new.js
+
+// ... (après la fonction animateValue)
+
+// --- NOUVELLES FONCTIONS WIKIMEDIA ---
+
+/**
+ * Récupère l'URL de la photo principale d'un article Wikipedia via l'API.
+ * @param {string} wikiUrl - L'URL complète de l'article Wikipedia du pilote (ex: driver.url).
+ * @returns {Promise<string|null>} L'URL directe de l'image (format 800px) ou null en cas d'erreur.
+ */
+async function fetchDriverImageUrl(wikiUrl) {
+    // 1. Extraire le titre de l'article de l'URL
+    const titleMatch = wikiUrl.match(/\/wiki\/(.*)/);
+    if (!titleMatch) {
+        console.error("URL Wikipedia invalide pour l'image:", wikiUrl);
+        return null;
+    }
+    // Le titre doit être encodé pour l'URL de l'API (ex: 'Lewis_Hamilton')
+    const articleTitle = encodeURIComponent(titleMatch[1]); 
+
+    // 2. Construire l'URL de l'API MediaWiki
+    // action=query: interroger l'API
+    // prop=pageimages: propriété pour les images de page
+    // pithumbsize=800: taille de la miniature souhaitée (800px de large)
+    // format=json: format de réponse
+    // origin=*: permet les requêtes Cross-Origin (CORS)
+    const API_WIKI = `https://en.wikipedia.org/w/api.php?action=query&titles=${articleTitle}&prop=pageimages&pithumbsize=800&format=json&origin=*`;
+    
+    try {
+        const response = await fetch(API_WIKI);
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP ${response.status} de l'API Wikimedia`);
+        }
+        const data = await response.json();
+        
+        // 3. Parser la réponse pour trouver l'URL
+        const pages = data.query.pages;
+        const pageId = Object.keys(pages)[0]; // Récupère l'ID de la page (la clé)
+        
+        // 4. Récupérer l'URL de la miniature (thumb)
+        const thumbUrl = pages[pageId]?.thumbnail?.source;
+        
+        if (thumbUrl) {
+            return thumbUrl;
+        } else {
+            console.warn(`[Image] Aucune image trouvée via l'API pour: ${articleTitle}`);
+            return null;
+        }
+
+    } catch (error) {
+        console.error("[Image] Erreur lors de la récupération de l'image Wiki:", error);
+        return null;
+    }
+}
+
+/**
+ * Applique l'URL de l'image au panneau central via la variable CSS.
+ * @param {string|null} imageUrl - L'URL de l'image à appliquer.
+ */
+function updateDriverImage(imageUrl) {
+    // Si imageUrl est null, on passe 'none' pour désactiver l'image (optionnel)
+    const url = imageUrl ? `url('${imageUrl}')` : 'none'; 
+    const centerPanel = document.querySelector('.center-panel');
+    // Met à jour la variable CSS --driver-bg-url que nous avons définie dans le CSS
+    centerPanel.style.setProperty('--driver-bg-url', url);
+}
+

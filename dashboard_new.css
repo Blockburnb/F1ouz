@@ -176,14 +176,103 @@ aside, section {
 .text-blue { color: var(--accent-cyan); }
 
 
-/* --- CENTRE : VOITURE 3D --- */
+/* F1ouz/dashboard_new.css */
+
 .center-panel {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    border: none; /* Pas de bordure pour le centre, plus aérien */
-    background: transparent;
+    border: none;
+    position: relative; /* Important pour positionner le fond */
+    overflow: hidden; /* Pour que l'image ne dépasse pas des bords arrondis */
+    background: transparent; /* On laisse voir le grid du body derrière si besoin */
+    
+    /* AJOUTEZ CETTE LIGNE : Définit une variable CSS par défaut */
+    --driver-bg-url: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Lewis_Hamilton_2023_Austria.jpg/800px-Lewis_Hamilton_2023_Austria.jpg');
+}
+
+/* F1ouz/dashboard_new.css */
+
+/* F1ouz/dashboard_new.css - Modifs pour Option 2 */
+
+.center-panel::before {
+    /* ... garder content, position, etc ... */
+    background-image: var(--driver-bg-url);
+    
+    /* CHANGEMENTS POUR PNG TRANSPARENT : */
+    background-size: contain; /* L'image entière doit être visible */
+    background-repeat: no-repeat;
+    background-position: bottom center; /* Le pilote est "posé" en bas */
+    
+    /* On enlève le grayscale pour voir les couleurs de l'écurie */
+    filter: drop-shadow(0 0 15px rgba(0,0,0,0.8)); /* Ombre portée derrière le pilote */
+    opacity: 0.9; /* Presque opaque */
+    mix-blend-mode: normal; /* Pas de fusion, on veut voir le pilote */
+    
+    /* Masque léger juste en bas pour qu'il ne "flotte" pas */
+    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+
+/* Ajout d'une vignette pour assombrir les bords (optionnel) */
+.center-panel::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle at center, transparent 40%, var(--bg-color) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Gestion des couches (Z-Index) pour que le texte soit au-dessus de l'image */
+.z-1 { z-index: 1; position: relative; }
+.z-2 { z-index: 2; position: relative; }
+
+
+/* Ajustement du conteneur HUD (les cercles qui tournent) */
+.hud-container {
+    position: absolute;
+    width: 100%; height: 100%;
+    display: flex; justify-content: center; align-items: center;
+    pointer-events: none; /* Pour ne pas gêner */
+}
+
+/* HUD Elements décoratifs (conservés mais simplifiés) */
+.hud-circle {
+    position: absolute;
+    border: 1px dashed var(--accent-cyan);
+    border-radius: 50%;
+    opacity: 0.2; /* Un peu plus discret sur la photo */
+    animation: rotate 30s linear infinite; /* Rotation plus lente */
+}
+.c-1 { width: 60%; height: auto; aspect-ratio: 1/1; }
+.c-2 { width: 80%; height: auto; aspect-ratio: 1/1; border-style: solid; border-width: 1px; border-color: var(--accent-blue); animation-direction: reverse; }
+
+@keyframes rotate { 100% { transform: rotate(360deg); } }
+
+
+.main-stat-box {
+    /* margin-top supprimé car on centre tout verticalement maintenant */
+    text-align: center;
+    /* Ombre portée sous le texte pour garantir la lisibilité sur la photo */
+    text-shadow: 0 5px 15px rgba(0,0,0,0.9);
+}
+
+.stat-value-huge {
+    font-family: var(--font-display);
+    font-size: 6rem; /* Un peu plus gros pour l'impact */
+    font-weight: 900;
+    color: white;
+    /* Lueur bleue intense autour du chiffre */
+    text-shadow: 0 0 30px rgba(52, 152, 219, 0.6), 0 0 10px rgba(0, 243, 255, 0.8);
+    line-height: 1;
+}
+
+/* Ajustement responsive pour l'image de fond */
+@media (max-width: 1024px) {
+    .center-panel { min-height: 400px; } /* Hauteur minimale sur mobile pour bien voir la photo */
 }
 
 .car-visual-container {
