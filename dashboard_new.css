@@ -189,41 +189,55 @@ aside, section {
     background: transparent; /* On laisse voir le grid du body derrière si besoin */
     
     /* AJOUTEZ CETTE LIGNE : Définit une variable CSS par défaut */
-    --driver-bg-url: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Lewis_Hamilton_2023_Austria.jpg/800px-Lewis_Hamilton_2023_Austria.jpg');
+    --driver-bg-url:none;
 }
 
 /* F1ouz/dashboard_new.css */
 
 /* F1ouz/dashboard_new.css - Modifs pour Option 2 */
 
+/* F1ouz/dashboard_new.css */
+
+/* F1ouz/dashboard_new.css */
+
 .center-panel::before {
-    /* ... garder content, position, etc ... */
+    /* ... propriétés de position identiques ... */
+    content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
     background-image: var(--driver-bg-url);
-    
-    /* CHANGEMENTS POUR PNG TRANSPARENT : */
-    background-size: contain; /* L'image entière doit être visible */
+    background-size: contain;
     background-repeat: no-repeat;
-    background-position: bottom center; /* Le pilote est "posé" en bas */
-    
-    /* On enlève le grayscale pour voir les couleurs de l'écurie */
-    filter: drop-shadow(0 0 15px rgba(0,0,0,0.8)); /* Ombre portée derrière le pilote */
-    opacity: 0.9; /* Presque opaque */
-    mix-blend-mode: normal; /* Pas de fusion, on veut voir le pilote */
-    
-    /* Masque léger juste en bas pour qu'il ne "flotte" pas */
-    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    background-position: bottom center;
+
+    /* --- TRAITEMENT VISUEL "ANALYTIQUE" --- */
+    filter: 
+        grayscale(100%)       /* Noir et Blanc pur */
+        contrast(1.2)         /* Contraste renforcé pour la précision */
+        drop-shadow(0 5px 15px rgba(0,0,0,0.8)); /* Ombre portée forte pour détacher du fond */
+
+    opacity: 0.5; /* Très subtil, en arrière-plan */
+    mix-blend-mode: luminosity; /* Prend la luminosité du fond gris ardoise */
+
+    /* Masque radial (focus central) */
+    -webkit-mask-image: radial-gradient(circle at center bottom, black 40%, transparent 90%);
+    mask-image: radial-gradient(circle at center bottom, black 40%, transparent 90%);
 }
 
 /* Ajout d'une vignette pour assombrir les bords (optionnel) */
+/* Grille numérique par-dessus l'image */
 .center-panel::after {
-    content: '';
+    content: "";
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: radial-gradient(circle at center, transparent 40%, var(--bg-color) 100%);
-    z-index: 1;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 1; /* Par dessus l'image (z-0) mais sous le texte (z-2) */
     pointer-events: none;
+    
+    /* Lignes horizontales très fines (Scanlines) */
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0, 243, 255, 0.03) 3px /* Bleu cyan très très transparent */
+    );
 }
 
 /* Gestion des couches (Z-Index) pour que le texte soit au-dessus de l'image */
@@ -365,4 +379,94 @@ aside, section {
     body { overflow: auto; height: auto; padding: 20px 0; }
     .dashboard-wrapper { height: auto; }
     .car-visual-container { transform: scale(0.8); }
+}
+/* --- FORM CONTROLS (Input, Select, Button) --- */
+
+/* Conteneur principal */
+.selection-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espacement vertical régulier */
+    margin-bottom: 20px;
+}
+
+/* Style des étiquettes (Labels) */
+.selection-controls label {
+    font-family: var(--font-display); /* Police "Orbitron" */
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary); /* Gris bleuté */
+    margin-bottom: -5px; /* Rapproche le label de son input */
+    margin-left: 2px;
+}
+
+/* Style commun Input Texte & Select */
+.form-control {
+    background-color: rgba(0, 0, 0, 0.4); /* Fond très sombre */
+    border: 1px solid rgba(52, 152, 219, 0.3); /* Bordure bleue subtile */
+    color: var(--text-primary);
+    font-family: var(--font-body); /* Police "Rajdhani" */
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 10px 12px;
+    border-radius: 2px; /* Coins quasi carrés (style high-tech) */
+    outline: none;
+    transition: all 0.3s ease;
+    
+    /* Pour les selects, on change la flèche par défaut si possible (optionnel) */
+    appearance: none; 
+    background-image: linear-gradient(45deg, transparent 50%, var(--accent-blue) 50%),
+                      linear-gradient(135deg, var(--accent-blue) 50%, transparent 50%);
+    background-position: calc(100% - 15px) calc(1em + 2px),
+                         calc(100% - 10px) calc(1em + 2px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+/* Exception pour l'input texte (pas de flèche) */
+input.form-control {
+    background-image: none;
+}
+
+/* État Focus (quand on clique dedans) */
+.form-control:focus {
+    border-color: var(--accent-cyan); /* Bordure Cyan vibrant */
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.15); /* Légère lueur */
+    background-color: rgba(0, 243, 255, 0.05);
+}
+
+/* --- BOUTON D'ACTION --- */
+.btn-action {
+    margin-top: 10px;
+    background: linear-gradient(90deg, var(--accent-blue), #2980b9);
+    border: none;
+    padding: 12px;
+    color: white;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    
+    /* Forme dynamique avec coin coupé (Style F1) */
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Effet de survol sur le bouton */
+.btn-action:hover {
+    background: var(--accent-cyan);
+    color: var(--bg-dark); /* Texte devient sombre pour le contraste sur fond cyan */
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.4);
+    transform: translateY(-2px); /* Léger soulèvement */
+}
+
+/* Petit effet "clic" */
+.btn-action:active {
+    transform: translateY(1px);
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.4);
 }

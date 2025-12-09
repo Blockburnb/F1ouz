@@ -440,7 +440,15 @@ async function init(){
       defs.append('clipPath').attr('id', clipId).attr('clipPathUnits', 'userSpaceOnUse')
         .append('circle').attr('cx', cx).attr('cy', cy).attr('r', rp);
 
-      const bubbleG = svg.append('g').attr('class', 'bubble').style('pointer-events', 'auto');
+      // Par ce bloc complet :
+      const bubbleG = svg.append('g')
+        .attr('class', 'bubble')
+        .style('pointer-events', 'auto')
+        .style('cursor', 'pointer') // Change le curseur en main
+        .on('click', function() {
+            // Redirection vers le focus pilote avec l'ID
+            window.location.href = `../dashboard_new.html?driverId=${d.id}`;
+        });
 
       // Cercle de fond (couleur) - ID ajouté pour modification
       bubbleG.append('circle')

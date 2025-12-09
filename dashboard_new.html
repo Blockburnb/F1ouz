@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 Telemetry // L.Hamilton</title>
+    <title>F1 Telemetry // Dashboard</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="dashboard_new.css">
-    <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
 
@@ -25,21 +24,39 @@
             </div>
             <div class="status-bar">
                 <div class="status-item"><span class="dot active"></span> SYSTEM ONLINE</div>
-                <div class="status-item" id="last-update">DATA: LOADING...</div>
-                <a href="../index.html" class="btn-exit">EXIT TERMINAL</a>
+                <div class="status-item" id="last-update">WAITING FOR DATA...</div>
+                <a href="../index.html" class="btn-exit">EXIT</a>
             </div>
         </header>
 
         <main class="main-grid">
             
             <aside class="left-panel">
+    
+                <div class="panel-header">SÉLECTION_DONNÉES</div>
+                
+                <div class="selection-controls">
+                    <label for="driver-search">Recherche Pilote:</label>
+                    <input type="text" id="driver-search" class="form-control" placeholder="Ex: Hamilton..." autocomplete="off">
+
+                    <label for="driver-select">Liste Pilote:</label>
+                    <select id="driver-select" class="form-control"></select>
+                    
+                    <label for="season-select">Saison:</label>
+                    <select id="season-select" class="form-control"></select>
+                    
+                    <button id="load-stats-btn" class="btn-action">CHARGER DONNÉES</button>
+                </div>
+
+                <div class="panel-divider"></div>
+                
                 <div class="panel-header">DRIVER_PROFILE</div>
                 
                 <div class="driver-card">
-                    <div class="driver-number">44</div>
-                    <h1 class="driver-name">LEWIS<br><span class="surname">HAMILTON</span></h1>
-                    <div class="driver-team" id="driver-team">MERCEDES AMG F1</div>
-                    <div class="driver-nation"><img src="https://flagcdn.com/gb.svg" width="30" alt="UK"> GBR</div>
+                    <div class="driver-number" id="driver-number">--</div>
+                    <h1 class="driver-name" id="driver-name">--<br><span class="surname">--</span></h1>
+                    <div class="driver-team" id="driver-team">--</div>
+                    <div class="driver-nation" id="driver-nation">--</div>
                 </div>
 
                 <div class="panel-divider"></div>
@@ -50,8 +67,8 @@
                         <div class="kpi-value big" id="season-year">--</div>
                     </div>
                     <div class="kpi-box">
-                        <div class="kpi-label">POSITION FINAL</div>
-                        <div class="kpi-value big text-blue" id="season-rank">--</div>
+                        <div class="kpi-label">POINTS</div>
+                        <div class="kpi-value big text-blue" id="season-points-display">--</div>
                     </div>
                 </div>
             </aside>
@@ -63,8 +80,8 @@
                 </div>
 
                 <div class="main-stat-box z-2">
-                    <div class="stat-label">TOTAL POINTS (SEASON)</div>
-                    <div class="stat-value-huge" id="total-points">000</div>
+                    <div class="stat-label">TOTAL POINTS (SAISON)</div>
+                    <div class="stat-value-huge" id="total-points">0</div>
                 </div>
             </section>
 
@@ -111,7 +128,7 @@
                     </div>
                     <div class="tech-box">
                         <span class="icon">⏱️</span>
-                        <span class="label">MEILLEUR POS.</span>
+                        <span class="label">MEILLEURE POS.</span>
                         <span class="value" id="best-pos">--</span>
                     </div>
                     <div class="tech-box">
@@ -121,16 +138,14 @@
                     </div>
                     <div class="tech-box">
                         <span class="icon">📊</span>
-                        <span class="label">MOY. POINTS/GP</span>
+                        <span class="label">MOY. PTS/GP</span>
                         <span class="value" id="avg-points">0.0</span>
                     </div>
                 </div>
 
             </aside>
         </main>
-
     </div>
-
     <script src="dashboard_new.js"></script>
 </body>
 </html>
