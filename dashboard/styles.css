@@ -137,6 +137,16 @@ header p {
   gap: 10px;
 }
 
+/* Align the last controls block (reset / focus buttons) to the right of the filters bar */
+.global-filters .controls:last-child {
+  margin-left: auto;
+}
+
+/* On narrow screens, avoid forcing right alignment so items wrap naturally */
+@media (max-width: 720px) {
+  .global-filters .controls:last-child { margin-left: 0; }
+}
+
 /* Style des labels (cachés visuellement mais présents pour l'accessibilité) */
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -276,6 +286,26 @@ select:hover, select:focus {
   flex: 1;
   min-height: 280px;
   position: relative;
+  display: flex;           /* allow svg + legend to share space */
+  flex-direction: column;  /* svg on top, legend below */
+}
+
+/* ensure svg can shrink while keeping aspect and allow the legend area to be scrollable */
+.card .chart svg { width: 100%; flex: 1 1 auto; height: auto; display: block; }
+
+/* keep legend inside chart area: limit height and enable scrolling when content is large */
+.card .chart .legend {
+  margin-top: 10px;
+  overflow: auto;
+  max-height: 120px; /* adjust as needed */
+  padding-top: 6px;
+}
+
+/* On very wide screens we can place legend to the right to use space better */
+@media (min-width: 1100px) {
+  .card .chart { flex-direction: row; gap: 18px; }
+  .card .chart svg { flex: 1 1 70%; }
+  .card .chart .legend { flex: 0 0 30%; max-height: none; overflow: auto; margin-top: 0; }
 }
 
 /* SVG Chart fills */

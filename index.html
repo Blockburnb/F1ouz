@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>F1 Analytics - Accueil</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
     
-    <!-- Ajout de styles spécifiques pour les nouveaux boutons -->
     <style>
         /* Style pour le bouton du menu */
         .btn-dashboard {
@@ -17,15 +18,18 @@
             text-decoration: none;
             border-radius: 4px;
             font-weight: bold;
-            margin-right: 15px;
+            margin-right: 10px;
             border: 1px solid #e10600;
             transition: background 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         .btn-dashboard:hover {
             background-color: #b30000;
         }
 
-        /* Style pour le gros bouton de la section Hero */
+        /* Style pour les gros boutons de la section Hero */
         .btn-hero {
             display: inline-block;
             margin-top: 20px;
@@ -36,28 +40,40 @@
             font-weight: bold;
             border-radius: 5px;
             font-size: 1.1em;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 15px;
         }
         .btn-hero:hover {
             transform: scale(1.05);
             background-color: #f0f0f0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Classe spécifique pour le bouton focus pilote (Bleu) */
+        .btn-telemetry {
+            background-color: #3498db;
+            color: white;
+            border: none;
+        }
+        .btn-telemetry:hover {
+            background-color: #2980b9;
+            color: white;
         }
     </style>
 </head>
 <body>
 
-    <!-- Barre de Navigation Dynamique -->
     <nav class="navbar">
         <div class="logo">🏁 F1 Analytics</div>
+
         <div id="nav-auth" class="nav-links">
-            <!-- AJOUT 1 : Bouton Dashboard dans le menu -->
+           
             <a href="dashboard/dashboard.html" class="btn-dashboard">📊 Dashboard</a>
             
             <a href="login.html" class="btn-login">Connexion Membre</a>
         </div>
     </nav>
 
-    <!-- Section Présentation -->
     <header class="hero-section">
         <div class="hero-content">
             <h1 id="welcome-title">L'Histoire de la Formule 1</h1>
@@ -76,21 +92,16 @@
         </div>
     </header>
 
-    <!-- Tableau Filtrable -->
     <main class="container">
         <section class="data-table-section">
             <div class="section-header">
-                <h2>Annuaire Officiel des Pilotes</h2>
+                <h2 style="color:#15151e">Liste des pilotes</h2>
                 
-                <!-- Zone de Filtres -->
                 <div class="filters-box">
-                    <!-- Filtre Nationalité -->
                     <select id="nationalityFilter" onchange="filterTable()">
                         <option value="">🌍 Toutes les nationalités</option>
-                        <!-- Rempli par JS -->
-                    </select>
+                        </select>
 
-                    <!-- Recherche Texte -->
                     <div class="search-box">
                         <input type="text" id="searchInput" placeholder="Rechercher un nom..." onkeyup="filterTable()">
                         <span class="search-icon">🔍</span>

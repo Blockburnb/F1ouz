@@ -1,4 +1,4 @@
-// app.js — simple dashboard loading CSVs from ../data and computing requested stats
+
 
 const dataPath = "../data/"; // use forward slashes for browser fetch URLs
 
@@ -11,7 +11,7 @@ async function loadCsv(name){
 
 async function init(){
   
-  // --- DÉBUT BLOC À COLLER ---
+  
   const startLights = (function(){
     let overlay = null, lights = [], goText = null, cycleTimer = null, loadedFlag = false;
     
@@ -340,7 +340,7 @@ async function init(){
 
     const defs = svg.append('defs');
 
-    // --- NOUVEAU : GESTION WIKIPEDIA / WIKIDATA ---
+
     
     // 1. Fonction pour extraire le titre de l'article depuis l'URL (ex: "Lewis_Hamilton")
     const getWikiTitle = (driverId) => {
@@ -427,7 +427,6 @@ async function init(){
         }
     }
 
-    // --- FIN LOGIQUE NOUVELLE ---
 
     // Rendu des bulles
     for(let i=0; i<plot.length; i++){
@@ -440,7 +439,15 @@ async function init(){
       defs.append('clipPath').attr('id', clipId).attr('clipPathUnits', 'userSpaceOnUse')
         .append('circle').attr('cx', cx).attr('cy', cy).attr('r', rp);
 
-      const bubbleG = svg.append('g').attr('class', 'bubble').style('pointer-events', 'auto');
+      // Par ce bloc complet :
+      const bubbleG = svg.append('g')
+        .attr('class', 'bubble')
+        .style('pointer-events', 'auto')
+        .style('cursor', 'pointer') // Change le curseur en main
+        .on('click', function() {
+            // Redirection vers le focus pilote avec l'ID
+            window.location.href = `../dashboard_new.html?driverId=${d.id}`;
+        });
 
       // Cercle de fond (couleur) - ID ajouté pour modification
       bubbleG.append('circle')
@@ -840,7 +847,7 @@ async function init(){
   makeCardExpandable();
 
 }
-// ... (tout votre code existant dans init) ...
+
 
   // --- GESTION DE LA SÉCURITÉ ET DU BOUTON ---
   function handleAuthAndSecurity() {
@@ -901,5 +908,5 @@ async function init(){
   // Appeler la fonction de sécurité
   handleAuthAndSecurity();
 
-  // ... (fin de la fonction init)
+
 init().catch(err=>{ console.error(err); document.body.insertAdjacentHTML('beforeend', '<p style="color:red">Erreur: '+err.message+'</p>') });

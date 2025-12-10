@@ -1,4 +1,4 @@
-// Fonction de connexion (déjà vue précédemment)
+// Fonction de connexion 
 function login(username, password) {
     fetch('api/login.php', {
         method: 'POST',
@@ -144,7 +144,7 @@ function fetchDrivers() {
         });
 }
 
-// --- NOUVEAU : Remplir la liste déroulante ---
+// Remplir la liste déroulante ---
 function populateNationalityFilter(data) {
     const select = document.getElementById('nationalityFilter');
     if (!select) return;
@@ -220,7 +220,6 @@ function filterTable() {
 }
 
 // --- AUTRES FONCTIONS (Navigation, Login, Register) ---
-// (Identiques à avant, je les remets pour que le fichier soit complet)
 
 function updateNavbar() {
     const navAuth = document.getElementById('nav-auth');
