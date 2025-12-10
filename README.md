@@ -32,14 +32,14 @@ Si vous avez démarré l'application avec Docker, vous pouvez vérifier les comp
 
 ```powershell
 # Ouvrir un shell MySQL dans le conteneur (remplacez le nom du conteneur si besoin)
-docker exec -it f1_db_container mysql -u root -pf1_pass f1_project
+docker exec -it f1ouz-web mysql -u root -pf1_pass f1_project
 
 # Une fois dans le prompt MySQL, lancer la requête :
 SELECT * FROM users;
 ```
 
 Remarques :
-- `f1_db_container` est le nom d'exemple du conteneur de base de données. Adaptez-le au nom réel de votre conteneur (voir `docker ps`).
+- `f1ouz-web` est le nom d'exemple du conteneur de base de données. Adaptez-le au nom réel de votre conteneur (voir `docker ps`).
 - `-pf1_pass` utilise ici le mot de passe `f1_pass` défini dans la configuration ; si votre mot de passe est différent, remplacez-le.
 - La base cible est `f1_project` (nom d'exemple utilisé ici) — adaptez si votre configuration diffère.
 
