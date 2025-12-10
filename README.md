@@ -44,6 +44,7 @@ SHOW TABLES;
 # Une fois dans le prompt MySQL, lancer la requête :
 SELECT * FROM users;
 ```
+```powershell
 mysql> SHOW TABLES;
 +----------------------+
 | Tables_in_f1_project |
@@ -62,7 +63,7 @@ mysql> SELECT * FROM users;
 |  4 | test3    | $2y$10$J6p24Jz9ORucl8NKSX2N1exybSCYjwLtCusjJzmqlx8UvaBxjGD0. | user  |
 +----+----------+--------------------------------------------------------------+-------+
 4 rows in set (0.01 sec)
-
+```
 On voit ici que les comptes qui ne sont pas les comptes test disposent bel et bien d'un mot de passe hashé
 
 Remarques :
