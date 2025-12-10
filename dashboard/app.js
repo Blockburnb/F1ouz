@@ -1,4 +1,4 @@
-// app.js — simple dashboard loading CSVs from ../data and computing requested stats
+
 
 const dataPath = "../data/"; // use forward slashes for browser fetch URLs
 
@@ -11,7 +11,7 @@ async function loadCsv(name){
 
 async function init(){
   
-  // --- DÉBUT BLOC À COLLER ---
+  
   const startLights = (function(){
     let overlay = null, lights = [], goText = null, cycleTimer = null, loadedFlag = false;
     
@@ -340,7 +340,7 @@ async function init(){
 
     const defs = svg.append('defs');
 
-    // --- NOUVEAU : GESTION WIKIPEDIA / WIKIDATA ---
+
     
     // 1. Fonction pour extraire le titre de l'article depuis l'URL (ex: "Lewis_Hamilton")
     const getWikiTitle = (driverId) => {
@@ -427,7 +427,6 @@ async function init(){
         }
     }
 
-    // --- FIN LOGIQUE NOUVELLE ---
 
     // Rendu des bulles
     for(let i=0; i<plot.length; i++){
@@ -848,7 +847,7 @@ async function init(){
   makeCardExpandable();
 
 }
-// ... (tout votre code existant dans init) ...
+
 
   // --- GESTION DE LA SÉCURITÉ ET DU BOUTON ---
   function handleAuthAndSecurity() {
@@ -909,5 +908,5 @@ async function init(){
   // Appeler la fonction de sécurité
   handleAuthAndSecurity();
 
-  // ... (fin de la fonction init)
+
 init().catch(err=>{ console.error(err); document.body.insertAdjacentHTML('beforeend', '<p style="color:red">Erreur: '+err.message+'</p>') });

@@ -1,4 +1,4 @@
-/* --- Global & Reset (CRUCIAL pour éviter le "de travers") --- */
+
 * {
     box-sizing: border-box; /* Inclut padding et bordures dans la largeur */
 }
@@ -9,7 +9,7 @@ body {
     padding: 0;
     background-color: #f3f3f3;
     color: #333;
-    /* On retire le display:flex global qui casserait la page d'accueil */
+    
 }
 
 /* --- Navbar --- */
@@ -542,8 +542,7 @@ tr:hover { background-color: #fff5f5; }
     .auth-form-side { flex: 1; width: 100%; border: none; }
 }
 
-/* PARTIE AUTH - allow reversing the two panels when needed (e.g. register page)
-   Usage: add class `reverse` to `.auth-container` in the HTML */
+
 .auth-container.reverse { 
     flex-direction: row-reverse; /* swap visual and form side */
 }

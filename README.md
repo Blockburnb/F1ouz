@@ -32,16 +32,43 @@ Si vous avez démarré l'application avec Docker, vous pouvez vérifier les comp
 
 ```powershell
 # Ouvrir un shell MySQL dans le conteneur (remplacez le nom du conteneur si besoin)
-docker exec -it f1ouz-web mysql -u root -pf1_pass f1_project
+(Mot de passe DB : 'f1_pass')
+docker exec -it f1_db_container mysql -u root -p
+
+Ensuite, il faut sélectionner la base f1_project
+USE f1_project;
+On peut vérifier les tables présentes : 
+SHOW TABLES;
+
 
 # Une fois dans le prompt MySQL, lancer la requête :
 SELECT * FROM users;
 ```
+mysql> SHOW TABLES;
++----------------------+
+| Tables_in_f1_project |
++----------------------+
+| users                |
++----------------------+
+1 row in set (0.01 sec)
+
+mysql> SELECT * FROM users;
++----+----------+--------------------------------------------------------------+-------+
+| id | username | password                                                     | role  |
++----+----------+--------------------------------------------------------------+-------+
+|  1 | admin    | admin                                                        | admin |
+|  2 | toto     | toto                                                         | user  |
+|  3 | test2    | $2y$10$DoJWz.FYzTbXk5FhUX61eONz6fhaTsnL0CiQ2QKZil1H9WI2Gx2Ru | user  |
+|  4 | test3    | $2y$10$J6p24Jz9ORucl8NKSX2N1exybSCYjwLtCusjJzmqlx8UvaBxjGD0. | user  |
++----+----------+--------------------------------------------------------------+-------+
+4 rows in set (0.01 sec)
+
+On voit ici que les comptes qui ne sont pas les comptes test disposent bel et bien d'un mot de passe hashé
 
 Remarques :
 - `f1ouz-web` est le nom d'exemple du conteneur de base de données. Adaptez-le au nom réel de votre conteneur (voir `docker ps`).
-- `-pf1_pass` utilise ici le mot de passe `f1_pass` défini dans la configuration ; si votre mot de passe est différent, remplacez-le.
-- La base cible est `f1_project` (nom d'exemple utilisé ici) — adaptez si votre configuration diffère.
+- `-pf1_pass` utilise ici le mot de passe `f1_pass` défini dans la configuration
+- La base cible est `f1_project`
 
 Cette commande vous affichera les comptes présents (username, hash de mot de passe, rôle, etc.).
 
@@ -82,4 +109,4 @@ Cette commande vous affichera les comptes présents (username, hash de mot de pa
 
 4. **Ouvrir dans le navigateur**
    - Application Web: [http://localhost](http://localhost)
-   - Base de données (phpMyAdmin): [http://localhost:8080](http://localhost:8080) (si configuré)
+

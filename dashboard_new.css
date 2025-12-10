@@ -222,7 +222,7 @@ aside, section {
     mask-image: radial-gradient(circle at center bottom, black 40%, transparent 90%);
 }
 
-/* Ajout d'une vignette pour assombrir les bords (optionnel) */
+
 /* Grille numérique par-dessus l'image */
 .center-panel::after {
     content: "";
@@ -268,9 +268,9 @@ aside, section {
 
 
 .main-stat-box {
-    /* margin-top supprimé car on centre tout verticalement maintenant */
+    
     text-align: center;
-    /* Ombre portée sous le texte pour garantir la lisibilité sur la photo */
+    
     text-shadow: 0 5px 15px rgba(0,0,0,0.9);
 }
 
