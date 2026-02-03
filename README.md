@@ -79,8 +79,8 @@ Cette commande vous affichera les comptes présents (username, hash de mot de pa
 
 1. **Cloner le dépôt**
    ```bash
-   git clone https://github.com/Blockburnb/F1ouz.git
-   cd F1ouz
+   git clone https://github.com/Blockburnb/R5.VCOD.07_Programmation_web_pour_la_visualisation.git
+   cd R5.VCOD.07_Programmation_web_pour_la_visualisation
    ```
 
 2. **Lancer le script d'installation**
