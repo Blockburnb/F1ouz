@@ -1,5 +1,3 @@
-# F1ouz
-
 Tableau de bord F1 interactif avec visualisations de données (D3.js, HTML/CSS/JavaScript).
 
 **Dataset:** https://www.kaggle.com/datasets/rohanrao/formula-1-world-championship-1950-2020?select=results.csv
